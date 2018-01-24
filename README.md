@@ -1,3 +1,5 @@
+[![](https://godoc.org/github.com/mfridman/srfax?status.svg)](http://godoc.org/github.com/mfridman/srfax)
+
 # srfax
 
 `srfax` is a Go client library for interacting with the SRFax API service. The client supports all official operations and provides convenience functions for ease-of-use.
