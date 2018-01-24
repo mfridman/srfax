@@ -35,7 +35,7 @@ type FaxStatusResp struct {
 
 // GetFaxStatus retrieves the status of a single sent fax. Works only with outbound faxes.
 // Accepts single id, i.e., FaxDetailID. Where FaxDetailsID returned from a QueueFax operation.
-func (c Client) GetFaxStatus(id int, optArgs ...FaxStatusOpts) (*FaxStatusResp, error) {
+func (c *Client) GetFaxStatus(id int, optArgs ...FaxStatusOpts) (*FaxStatusResp, error) {
 	opts := FaxStatusOpts{}
 	if len(optArgs) >= 1 {
 		opts = optArgs[0]
@@ -53,7 +53,7 @@ func (c Client) GetFaxStatus(id int, optArgs ...FaxStatusOpts) (*FaxStatusResp, 
 	}{
 		Action:        actionGetFaxStatus,
 		ID:            id,
-		Client:        c,
+		Client:        *c,
 		FaxStatusOpts: opts,
 	}
 
