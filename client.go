@@ -4,26 +4,24 @@ import "github.com/pkg/errors"
 
 // ClientCfg specifies parameters required for establishing an SRFax client.
 type ClientCfg struct {
-	ID  int
-	PWD string
-	URL string // Optional
+	Id  int    // access_id
+	Pwd string // access_pwd
 }
 
+const (
+	// SRFax API url.
+	url = "https://www.srfax.com/SRF_SecWebSvc.php"
+)
+
 // NewClient returns an SRFax client based on configuration.
-// If URL is unspecified it will default to "https://www.srfax.com/SRF_SecWebSvc.php"
 func NewClient(c ClientCfg) (*Client, error) {
-	if c.ID == 0 {
+	if c.Id == 0 {
 		return nil, errors.New("must specify access id. User Number")
 	}
-	if c.PWD == "" {
+	if c.Pwd == "" {
 		return nil, errors.New("must specify access pwd. Password on the users account")
 	}
-	u := c.URL
-	if c.URL == "" {
-		// enable end-user to override default URL in case endpoint changes
-		u = "https://www.srfax.com/SRF_SecWebSvc.php"
-	}
-	return &Client{AccessID: c.ID, AccessPwd: c.PWD, url: u}, nil
+	return &Client{AccessID: c.Id, AccessPwd: c.Pwd, url: url}, nil
 }
 
 // Client is an SRFax client that contains authentication information
