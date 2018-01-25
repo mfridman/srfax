@@ -10,7 +10,6 @@ type ClientCfg struct {
 }
 
 // NewClient returns an SRFax client based on configuration.
-//
 // If URL is unspecified it will default to "https://www.srfax.com/SRF_SecWebSvc.php"
 func NewClient(c ClientCfg) (*Client, error) {
 	if c.ID == 0 {
@@ -34,9 +33,9 @@ type Client struct {
 	url       string
 }
 
-// CanAccess checks whether client is able to authenticate. This is a wrapper around the
+// CheckAuth checks whether client is able to authenticate. This is a wrapper around the
 // GetFaxUsage method. Used for convenience to quickly check if access ID & PWD are valid.
-func (c *Client) CanAccess() (bool, error) {
+func (c *Client) CheckAuth() (bool, error) {
 	s, err := c.GetFaxUsage()
 	if err != nil {
 		return false, err
