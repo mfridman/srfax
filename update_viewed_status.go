@@ -9,11 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ViewedStatusOpts contains optional arguments when updating fax status.
-type ViewedStatusOpts struct {
-	ResponseFormat string `json:"sResponseFormat,omitempty"`
-}
-
 // ViewedStatusResp is the response from a UpdateViewedStatus operation.
 type ViewedStatusResp struct {
 	Status string `mapstructure:"Status"`
@@ -31,12 +26,8 @@ type ViewedStatusResp struct {
 //
 // If updating a fax based on sFaxDetailsID, pass in the number as a string.
 // Formatting handled automatically.
-func (c *Client) UpdateViewedStatus(ident, dir, view string, optArgs ...ViewedStatusOpts) (*ViewedStatusResp, error) {
+func (c *Client) UpdateViewedStatus(ident, dir, view string) (*ViewedStatusResp, error) {
 	// TODO consider wrapping the string params "ident, dir, view" into a struct
-	opts := ViewedStatusOpts{}
-	if len(optArgs) >= 1 {
-		opts = optArgs[0]
-	}
 
 	msg := struct {
 		Action string `json:"action"`
@@ -45,13 +36,11 @@ func (c *Client) UpdateViewedStatus(ident, dir, view string, optArgs ...ViewedSt
 		FaxFileName  string `json:"sFaxFileName,omitempty"`  // mutually exclusive
 		Direction    string `json:"sDirection"`
 		MarkAsViewed string `json:"sMarkasViewed"`
-		ViewedStatusOpts
 	}{
-		Action:           actionUpdateViewedStatus,
-		Client:           *c,
-		Direction:        dir,
-		MarkAsViewed:     view,
-		ViewedStatusOpts: opts,
+		Action:       actionUpdateViewedStatus,
+		Client:       *c,
+		Direction:    dir,
+		MarkAsViewed: view,
 	}
 
 	if strings.Contains(ident, "|") {

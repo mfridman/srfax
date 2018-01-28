@@ -21,10 +21,9 @@ import (
 //
 // srfax is a custom tag used for reflection (specific to this struct).
 type QueueFaxOpts struct {
-	Retries        int    `srfax:"sRetries"`
-	ResponseFormat string `srfax:"sResponseFormat"`
-	AccountCode    string `srfax:"sAccountCode"`
-	FaxFromHeader  string `srfax:"sFaxFromHeader"`
+	Retries       int    `srfax:"sRetries"`
+	AccountCode   string `srfax:"sAccountCode"`
+	FaxFromHeader string `srfax:"sFaxFromHeader"`
 	// cover page
 	CoverPage      string `srfax:"sCoverPage"`
 	CPFromName     string `srfax:"sCPFromName"`

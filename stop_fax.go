@@ -7,11 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// StopFaxOpts contains optional arguments when stopping a fax.
-type StopFaxOpts struct {
-	ResponseFormat string `json:"sResponseFormat,omitempty"`
-}
-
 // StopFaxResp is the response from a StopFax operation.
 type StopFaxResp struct {
 	Status string `mapstructure:"Status"`
@@ -21,11 +16,7 @@ type StopFaxResp struct {
 // StopFax deletes a specified queued fax which has not yet been processed.
 //
 // Must supply a valid FaxDetailsID, which is a return value when calling QueueFax.
-func (c *Client) StopFax(id int, optArgs ...StopFaxOpts) (*StopFaxResp, error) {
-	opts := StopFaxOpts{}
-	if len(optArgs) >= 1 {
-		opts = optArgs[0]
-	}
+func (c *Client) StopFax(id int) (*StopFaxResp, error) {
 
 	if id <= 0 {
 		return nil, errors.New("id (sFaxDetailsID) cannot be zero or negative number")
@@ -35,12 +26,10 @@ func (c *Client) StopFax(id int, optArgs ...StopFaxOpts) (*StopFaxResp, error) {
 		Action string `json:"action"`
 		Client
 		FaxDetailsID int `json:"sFaxDetailsID"`
-		StopFaxOpts
 	}{
 		Action:       actionStopFax,
 		Client:       *c,
 		FaxDetailsID: id,
-		StopFaxOpts:  opts,
 	}
 
 	resp, err := sendPost(msg, c.url)

@@ -7,11 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FaxStatusOpts contains optional arguments when retrieving status of a single sent fax.
-type FaxStatusOpts struct {
-	ResponseFormat string `json:"sResponseFormat"`
-}
-
 // FaxStatusResp represents the status of a single sent fax.
 type FaxStatusResp struct {
 	Status string `mapstructure:"Status"`
@@ -33,11 +28,7 @@ type FaxStatusResp struct {
 
 // GetFaxStatus retrieves the status of a single sent fax. Works only with outbound faxes.
 // Accepts single id, i.e., FaxDetailID. Where FaxDetailsID returned from a QueueFax operation.
-func (c *Client) GetFaxStatus(id int, optArgs ...FaxStatusOpts) (*FaxStatusResp, error) {
-	opts := FaxStatusOpts{}
-	if len(optArgs) >= 1 {
-		opts = optArgs[0]
-	}
+func (c *Client) GetFaxStatus(id int) (*FaxStatusResp, error) {
 
 	if id <= 0 {
 		return nil, errors.New("id (sFaxDetailsID) cannot be zero or negative number")
@@ -47,12 +38,10 @@ func (c *Client) GetFaxStatus(id int, optArgs ...FaxStatusOpts) (*FaxStatusResp,
 		Action string `json:"action"`
 		ID     int    `json:"sFaxDetailsID"`
 		Client
-		FaxStatusOpts
 	}{
-		Action:        actionGetFaxStatus,
-		ID:            id,
-		Client:        *c,
-		FaxStatusOpts: opts,
+		Action: actionGetFaxStatus,
+		ID:     id,
+		Client: *c,
 	}
 
 	resp, err := sendPost(msg, c.url)

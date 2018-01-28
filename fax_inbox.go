@@ -9,7 +9,6 @@ import (
 
 // FaxInboxOpts contains optional arguments when retrieving inbox items.
 type FaxInboxOpts struct {
-	ResponseFormat  string `json:"sResponseFormat,omitempty"`
 	Period          string `json:"sPeriod,omitempty"`
 	StartDate       string `json:"sStartDate,omitempty"`
 	EndDate         string `json:"sEndDate,omitempty"`

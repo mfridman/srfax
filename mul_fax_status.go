@@ -8,11 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// MulFaxStatusOpts contains optional arguments when retrieving status of multiple send faxes.
-type MulFaxStatusOpts struct {
-	ResponseFormat string `json:"sResponseFormat"`
-}
-
 // MulFaxStatusResp represents the status of multiple sent faxes.
 type MulFaxStatusResp struct {
 	Status string `mapstructure:"Status"`
@@ -38,11 +33,7 @@ type MulFaxStatusResp struct {
 // GetMulFaxStatus retrieves status of multiple sent faxes. Works only with outbound faxes.
 // Accepts a slice of ids, i.e., FaxDetailIDs. Formatting handled automatically.
 // FaxDetailsID returned from a QueueFax operation.
-func (c *Client) GetMulFaxStatus(ids []string, optArgs ...MulFaxStatusOpts) (*MulFaxStatusResp, error) {
-	opts := MulFaxStatusOpts{}
-	if len(optArgs) >= 1 {
-		opts = optArgs[0]
-	}
+func (c *Client) GetMulFaxStatus(ids []string) (*MulFaxStatusResp, error) {
 
 	if len(ids) == 0 {
 		return nil, errors.New("when getting multiple fax status, must supply one or more FaxDetailsIDs (ids)")
@@ -52,12 +43,10 @@ func (c *Client) GetMulFaxStatus(ids []string, optArgs ...MulFaxStatusOpts) (*Mu
 		Action string `json:"action"`
 		ID     string `json:"sFaxDetailsID"`
 		Client
-		MulFaxStatusOpts
 	}{
-		Action:           actionGetMulFaxStatus,
-		ID:               strings.Join(ids, "|"),
-		Client:           *c,
-		MulFaxStatusOpts: opts,
+		Action: actionGetMulFaxStatus,
+		ID:     strings.Join(ids, "|"),
+		Client: *c,
 	}
 
 	resp, err := sendPost(msg, c.url)

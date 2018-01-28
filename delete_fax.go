@@ -9,11 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DeleteFaxOpts contains optional arguments when deleting faxes.
-type DeleteFaxOpts struct {
-	ResponseFormat string
-}
-
 // DeleteFaxResp is the response from a DeleteFax operation.
 type DeleteFaxResp struct {
 	Status string `mapstructure:"Status"`
@@ -32,7 +27,7 @@ type DeleteFaxResp struct {
 // wrong name, correct id = deletion ... foobar|31524120baz will trigger a deletion
 // correct name, wrong id = nothing
 // wrong name, wrong id = nothing (just in case)
-func (c *Client) DeleteFax(ids []string, dir string, optArgs ...DeleteFaxOpts) (*DeleteFaxResp, error) {
+func (c *Client) DeleteFax(ids []string, dir string) (*DeleteFaxResp, error) {
 	if !(dir == "IN" || dir == "OUT") {
 		return nil, errors.New(`dir (direction) must be one of either "IN" or "OUT"`)
 	}
@@ -42,10 +37,6 @@ func (c *Client) DeleteFax(ids []string, dir string, optArgs ...DeleteFaxOpts) (
 		"access_id":  c.AccessID,
 		"access_pwd": c.AccessPwd,
 		"sDirection": dir,
-	}
-
-	if len(optArgs) >= 1 {
-		msg["sResponseFormat"] = optArgs[0].ResponseFormat
 	}
 
 	const (
