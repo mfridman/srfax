@@ -15,7 +15,7 @@ type RetrieveFaxOpts struct {
 	SubUserID      string `json:"sSubUserID,omitempty"`
 	ResponseFormat string `json:"sResponseFormat,omitempty"`
 	FaxFormat      string `json:"sFaxFormat,omitempty"`
-	MarkasViewed   string `json:"sMarkasViewed,omitempty"`
+	MarkAsViewed   string `json:"sMarkasViewed,omitempty"`
 }
 
 // RetrieveFaxResp is the response from retrieving a fax.

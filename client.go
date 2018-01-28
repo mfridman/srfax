@@ -4,7 +4,7 @@ import "github.com/pkg/errors"
 
 // ClientCfg specifies parameters required for establishing an SRFax client.
 type ClientCfg struct {
-	Id  int    // access_id
+	ID  int    // access_id
 	Pwd string // access_pwd
 }
 
@@ -15,13 +15,13 @@ const (
 
 // NewClient returns an SRFax client based on configuration.
 func NewClient(c ClientCfg) (*Client, error) {
-	if c.Id == 0 {
+	if c.ID == 0 {
 		return nil, errors.New("must specify access id. User Number")
 	}
 	if c.Pwd == "" {
 		return nil, errors.New("must specify access pwd. Password on the users account")
 	}
-	return &Client{AccessID: c.Id, AccessPwd: c.Pwd, url: url}, nil
+	return &Client{AccessID: c.ID, AccessPwd: c.Pwd, url: url}, nil
 }
 
 // Client is an SRFax client that contains authentication information

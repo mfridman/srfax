@@ -46,13 +46,13 @@ func (c *Client) UpdateViewedStatus(ident, dir, view string, optArgs ...ViewedSt
 		FaxDetailsID int    `json:"sFaxDetailsID,omitempty"` // mutually exclusive
 		FaxFileName  string `json:"sFaxFileName,omitempty"`  // mutually exclusive
 		Direction    string `json:"sDirection"`
-		Viewed       string `json:"sMarkasViewed"`
+		MarkAsViewed string `json:"sMarkasViewed"`
 		ViewedStatusOpts
 	}{
 		Action:           actionUpdateViewedStatus,
 		Client:           *c,
 		Direction:        dir,
-		Viewed:           view,
+		MarkAsViewed:     view,
 		ViewedStatusOpts: opts,
 	}
 
