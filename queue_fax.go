@@ -48,11 +48,11 @@ type QueueFaxCfg struct {
 	ToFaxNumber []string // each number must be 11 digits represented as a String
 }
 
-// QFile represents a queueable fax item.
+// File represents a queueable fax item.
 // It is the callers responsibility to ensure that Content is base64-encoded.
 // TODO think about adding a convenience function that specifies an "outbox", i.e., a directory,
-// and generates all files in that directory as a []QFile, which can be passed directly to QueueFax
-type QFile struct {
+// and generates all files in that directory as a []File, which can be passed directly to QueueFax
+type File struct {
 	Name    string // filename
 	Content string // base64-encoded string
 }
@@ -67,7 +67,7 @@ type QueueFaxResp struct {
 //
 // if files is an empty slice, the CoverPage opts must be enabled. Otherwise will receive
 // error: No Files to Fax /
-func (c *Client) QueueFax(enc []QFile, q QueueFaxCfg, optArgs ...QueueFaxOpts) (*QueueFaxResp, error) {
+func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) (*QueueFaxResp, error) {
 	msg := map[string]interface{}{
 		"action":       actionQueueFax,
 		"access_id":    c.AccessID,
@@ -126,8 +126,8 @@ func (c *Client) QueueFax(enc []QFile, q QueueFaxCfg, optArgs ...QueueFaxOpts) (
 		prefixContent = "sFileContent_"
 	)
 	// No need to fail if len == 0, because SRFax can queue cover page only.
-	if len(enc) > 0 {
-		for i, f := range enc {
+	if len(files) > 0 {
+		for i, f := range files {
 			if f.Name == "" || f.Content == "" {
 				log.Printf("skipping empty file, check name or content: %+v\n", f)
 				continue
