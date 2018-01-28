@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -158,4 +159,17 @@ func nameOf(f interface{}) string {
 		}
 	}
 	return v.String()
+}
+
+// IDFromName parses a filename string and returns the ID.
+// File name format is usually "20180101230101-8812-34_0|31524120", where the
+// ID follows the pipe symbol.
+func IDFromName(s string) (int, error) {
+	ss := strings.SplitAfter(s, "|")
+	last := ss[len(ss)-1]
+	n, err := strconv.Atoi(last)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not get ID from filename")
+	}
+	return n, nil
 }
