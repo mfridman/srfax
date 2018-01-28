@@ -49,7 +49,6 @@ To begin using the client initialize a `ClientCfg` and pass it to `NewClient`.
 cfg := srfax.ClientCfg{
     ID:  00001,
     PWD: "password",
-    // URL: optional, defaults to https://www.srfax.com/SRF_SecWebSvc.php
 }
 
 client, err := srfax.NewClient(cfg)
@@ -83,6 +82,6 @@ Output:
         "SubUserID": 0,
         "NumberOfFaxes": 140,
         "NumberOfPages": 40
-    }],
+    }]
 }
 ```
