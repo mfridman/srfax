@@ -2,32 +2,38 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/mfridman/srfax)](https://goreportcard.com/report/github.com/mfridman/srfax)
 # srfax
 
-`srfax` is a Go client library for interacting with the SRFax API service. The client supports all official operations and provides convenience functions for ease-of-use.
+`srfax` is a Go client library for interacting with the SRFax API service. The client supports all SRFax operations and provides convenience functions for ease-of-use. Examples for all methods can be found in the [wiki](https://github.com/mfridman/srfax/wiki).
 
 The official SRFax API documentation can be found [here](https://www.srfax.com/api-page/getting-started/)
 
-**Important**, this library will handle Result errors in a Go like manner. Instead of mixing error messages with real results like so:
+**The current client is under development and the API may change. There is no guarantee of backwards compatibility at this time.**
 
-```json
-{
-    "Status": "",
-    "Result": "",
+---
+
+A note about error handling:
+
+This client will return an error if the Status value is "Failed". Do not attempt to access error messages via the Result field, use standard Go error handling instead.
+
+It is the caller's responsibility to check for errors prior to accessing a response struct. If error is not `nil` assume something has gone wrong.
+
+Caller can check for `*ResultError` error type and retrieve the original Status and Result message. Example:
+
+```go
+if err != nil {
+	switch e := err.(type) {
+	case *srfax.ResultError:
+		fmt.Println(e.Status)
+		fmt.Println(e.Raw)
+	}
 }
+// Failed
+// Invalid Access Code / Password
+
+fmt.Println(err)
+// Failed: Invalid Access Code / Password
 ```
 
-This client will always return an operation-specific response (suffixed with Resp) composed of the following:
-
-```js
-{
-    "Status": "",       /* Success or Failed */
-    "Result": "",       /* result will be specific to the operation performed */
-    "ResultError": ""   /* error will be empty unless there was an error */
-}
-```
-
-It is the caller's responsibility to check the Error value prior to using Result. If Error is not an empty string assume something has gone wrong and Result should not be used.
-
-If SRFax had publicly available errors then could compose error types, but for now it'll be a string.
+If SRFax had publicly available errors then could compose error types, but for now `ResultError` will do.
 
 ## Installation
 
@@ -62,7 +68,7 @@ if err != nil {
     // check errors
 }
 
-// for testing purposes use convenience func PP to pretty print the response to terminal
+// for testing purposes use convenience func PP to pretty print response to terminal. PP uses MarshalIndent.
 PP(resp) 
 ```
 Output:
@@ -78,6 +84,5 @@ Output:
         "NumberOfFaxes": 140,
         "NumberOfPages": 40
     }],
-    "ResultError": ""
 }
 ```
