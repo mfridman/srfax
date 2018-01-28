@@ -32,6 +32,15 @@ const (
 	actionGetFaxUsage        = "Get_Fax_Usage"
 )
 
+// ResultError represents an error when Result returns Failed.
+// Caller can access the Status and Raw (Result error message) fields.
+type ResultError struct {
+	Status string // Status value from Failed Response
+	Raw    string // Unformatted Result error message from Failed Response
+}
+
+func (r *ResultError) Error() string { return fmt.Sprintf("%v: %v", r.Status, r.Raw) }
+
 // decodeResp is a wrapper around mitchell's mapstructure pkg. Mainly used for debugging
 // parts of the API as the docs don't always line up with what comes across the wire.
 func decodeResp(resp map[string]interface{}, cfg *mapstructure.DecoderConfig) error {
