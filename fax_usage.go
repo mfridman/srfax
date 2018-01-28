@@ -9,7 +9,6 @@ import (
 
 // FaxUsageOpts contains optional arguments to modify fax usage report.
 type FaxUsageOpts struct {
-	ResponseFormat  string `json:"sResponseFormat,omitempty"`
 	Period          string `json:"sPeriod,omitempty"`
 	StartDate       string `json:"sStartDate,omitempty"`
 	EndDate         string `json:"sEndDate,omitempty"`
