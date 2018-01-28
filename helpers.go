@@ -98,7 +98,7 @@ func sendPost(msg interface{}, url string) (map[string]interface{}, error) {
 		on failure .. string, where string is an error message. Not a great design, but here we are.
 */
 
-// checkStatus checks existance for "Status" and "Result" keys in map and returns
+// checkStatus checks existence for "Status" and "Result" keys in map and returns
 // the status and an error message from Result.
 //
 // If Status equals Success the function will return Success and nil error
@@ -141,7 +141,7 @@ func whereami() {
 	log.Println(outF)
 }
 
-// PP is a convenience fuction to pretty print JSON.
+// PP is a convenience function to pretty print JSON.
 func PP(i interface{}) {
 	b, err := json.MarshalIndent(i, "", "  ")
 	if err != nil {

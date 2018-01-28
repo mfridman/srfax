@@ -50,7 +50,7 @@ type QueueFaxCfg struct {
 }
 
 // QFile represents a queueable fax item.
-// It is the callers responsibility to ensure that Conent is base64-encoded.
+// It is the callers responsibility to ensure that Content is base64-encoded.
 // TODO think about adding a convenience function that specifies an "outbox", i.e., a directory,
 // and generates all files in that directory as a []QFile, which can be passed directly to QueueFax
 type QFile struct {

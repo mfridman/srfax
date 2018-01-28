@@ -33,7 +33,7 @@ type DeleteFaxResp struct {
 // OUT || IN:
 // wrong name, correct id = deletion ... foobar|31524120baz will trigger a deletion
 // correct name, wrong id = nothing
-// wrong name, wronag id = nothing (just in case)
+// wrong name, wrong id = nothing (just in case)
 func (c *Client) DeleteFax(ids []string, dir string, optArgs ...DeleteFaxOpts) (*DeleteFaxResp, error) {
 	if !(dir == "IN" || dir == "OUT") {
 		return nil, errors.New(`dir (direction) must be one of either "IN" or "OUT"`)
