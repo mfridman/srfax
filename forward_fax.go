@@ -46,7 +46,7 @@ func (c *Client) ForwardFax(dir, ident string, fc ForwardFaxCfg, optArgs ...Forw
 
 	l := len(fc.ToFaxNumber)
 	if l > 1 && fc.FaxType != "BROADCAST" {
-		return nil, errors.New("when supplying many fax number in ToFaxNumber, the fax type must be BROADCAST")
+		return nil, errors.New("when supplying many fax numbers in ToFaxNumber, the type must be BROADCAST")
 	}
 
 	opts := ForwardFaxOpts{}
