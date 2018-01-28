@@ -1,5 +1,5 @@
 [![](https://godoc.org/github.com/mfridman/srfax?status.svg)](http://godoc.org/github.com/mfridman/srfax)
-
+[![Go Report Card](https://goreportcard.com/badge/github.com/mfridman/srfax)](https://goreportcard.com/report/github.com/mfridman/srfax)
 # srfax
 
 `srfax` is a Go client library for interacting with the SRFax API service. The client supports all official operations and provides convenience functions for ease-of-use.
@@ -27,7 +27,7 @@ This client will always return an operation-specific response (suffixed with Res
 
 It is the caller's responsibility to check the Error value prior to using Result. If Error is not an empty string assume something has gone wrong and Result should not be used.
 
-If SRFax had publically availble errors then could compose error types, but for now it'll be a string.
+If SRFax had publicly available errors then could compose error types, but for now it'll be a string.
 
 ## Installation
 
