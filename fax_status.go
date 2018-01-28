@@ -13,7 +13,6 @@ type FaxStatusOpts struct {
 }
 
 // FaxStatusResp represents the status of a single sent fax.
-// Note, that error message from Result, if any, will be stored in the ResultError field.
 type FaxStatusResp struct {
 	Status string `mapstructure:"Status"`
 	Result *struct {
@@ -30,7 +29,6 @@ type FaxStatusResp struct {
 		Duration    int    `mapstructure:"Duration"`
 		Size        int    `mapstructure:"Size"`
 	} `mapstructure:"Result"`
-	ResultError string
 }
 
 // GetFaxStatus retrieves the status of a single sent fax. Works only with outbound faxes.
@@ -63,7 +61,7 @@ func (c *Client) GetFaxStatus(id int, optArgs ...FaxStatusOpts) (*FaxStatusResp,
 	}
 
 	if st, err := checkStatus(resp); err != nil {
-		return &FaxStatusResp{Status: st, ResultError: fmt.Sprint(err)}, nil
+		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
 	}
 
 	var result FaxStatusResp

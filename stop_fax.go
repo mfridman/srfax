@@ -13,11 +13,9 @@ type StopFaxOpts struct {
 }
 
 // StopFaxResp is the response from a StopFax operation.
-// Note, error message from Result, if any, will be stored in ResultError.
 type StopFaxResp struct {
-	Status      string `mapstructure:"Status"`
-	Result      string `mapstructure:"Result"`
-	ResultError string
+	Status string `mapstructure:"Status"`
+	Result string `mapstructure:"Result"`
 }
 
 // StopFax deletes a specified queued fax which has not yet been processed.
@@ -51,7 +49,7 @@ func (c *Client) StopFax(id int, optArgs ...StopFaxOpts) (*StopFaxResp, error) {
 	}
 
 	if st, err := checkStatus(resp); err != nil {
-		return &StopFaxResp{Status: st, ResultError: fmt.Sprint(err)}, nil
+		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
 	}
 
 	var result StopFaxResp

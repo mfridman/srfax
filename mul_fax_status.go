@@ -14,7 +14,6 @@ type MulFaxStatusOpts struct {
 }
 
 // MulFaxStatusResp represents the status of multiple sent faxes.
-// Note, that error message from Result, if any, will be stored in the ResultError field.
 type MulFaxStatusResp struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
@@ -34,7 +33,6 @@ type MulFaxStatusResp struct {
 		ErrorCode   string `mapstructure:"ErrorCode"`
 		AccountCode string `mapstructure:"AccountCode"`
 	} `mapstructure:"Result"`
-	ResultError string
 }
 
 // GetMulFaxStatus retrieves status of multiple sent faxes. Works only with outbound faxes.
@@ -68,7 +66,7 @@ func (c *Client) GetMulFaxStatus(ids []string, optArgs ...MulFaxStatusOpts) (*Mu
 	}
 
 	if st, err := checkStatus(resp); err != nil {
-		return &MulFaxStatusResp{Status: st, ResultError: fmt.Sprint(err)}, nil
+		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
 	}
 
 	var result MulFaxStatusResp

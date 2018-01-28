@@ -18,7 +18,6 @@ type FaxInboxOpts struct {
 }
 
 // FaxInboxResp represents fax inbox information.
-// Note, that error message from Result, if any, will be stored in the ResultError field.
 type FaxInboxResp struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
@@ -34,7 +33,6 @@ type FaxInboxResp struct {
 		Pages         int    `mapstructure:"Pages"`
 		Size          int    `mapstructure:"Size"`
 	} `mapstructure:"Result"`
-	ResultError string
 }
 
 // GetFaxInbox retrieves a list of faxes received for a specified period of time.
@@ -60,7 +58,7 @@ func (c *Client) GetFaxInbox(optArgs ...FaxInboxOpts) (*FaxInboxResp, error) {
 	}
 
 	if st, err := checkStatus(resp); err != nil {
-		return &FaxInboxResp{Status: st, ResultError: fmt.Sprint(err)}, nil
+		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
 	}
 
 	var result FaxInboxResp

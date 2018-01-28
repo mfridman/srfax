@@ -15,11 +15,9 @@ type ViewedStatusOpts struct {
 }
 
 // ViewedStatusResp is the response from a UpdateViewedStatus operation.
-// Note, error message from Result, if any, will be stored in ResultError.
 type ViewedStatusResp struct {
-	Status      string `mapstructure:"Status"`
-	Result      string `mapstructure:"Result"`
-	ResultError string
+	Status string `mapstructure:"Status"`
+	Result string `mapstructure:"Result"`
 }
 
 // UpdateViewedStatus marks an inbound or outbound fax as read or unread.
@@ -72,7 +70,7 @@ func (c *Client) UpdateViewedStatus(ident, dir, view string, optArgs ...ViewedSt
 	}
 
 	if st, err := checkStatus(resp); err != nil {
-		return &ViewedStatusResp{Status: st, ResultError: fmt.Sprint(err)}, nil
+		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
 	}
 
 	var result ViewedStatusResp

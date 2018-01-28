@@ -19,11 +19,9 @@ type RetrieveFaxOpts struct {
 }
 
 // RetrieveFaxResp is the response from retrieving a fax.
-// Note, error message from Result, if any, will be stored in ResultError.
 type RetrieveFaxResp struct {
-	Status      string `mapstructure:"Status"`
-	Result      string `mapstructure:"Result"`
-	ResultError string
+	Status string `mapstructure:"Status"`
+	Result string `mapstructure:"Result"`
 }
 
 // DecodeResult decodes a base64-encoded Result string and returns the raw bytes.
@@ -85,7 +83,7 @@ func (c *Client) RetrieveFax(ident, dir string, optArgs ...RetrieveFaxOpts) (*Re
 	}
 
 	if st, err := checkStatus(resp); err != nil {
-		return &RetrieveFaxResp{Status: st, ResultError: fmt.Sprint(err)}, nil
+		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
 	}
 
 	var result RetrieveFaxResp

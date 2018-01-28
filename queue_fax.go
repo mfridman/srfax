@@ -59,11 +59,9 @@ type QFile struct {
 }
 
 // QueueFaxResp represents information about faxes added to the queue.
-// Note, error message from Result, if any, will be stored in ResultError.
 type QueueFaxResp struct {
-	Status      string `mapstructure:"Status"`
-	Result      string `mapstructure:"Result"`
-	ResultError string
+	Status string `mapstructure:"Status"`
+	Result string `mapstructure:"Result"`
 }
 
 // QueueFax adds faxes to the queue of items to send.
@@ -146,7 +144,7 @@ func (c *Client) QueueFax(enc []QFile, q QueueFaxCfg, optArgs ...QueueFaxOpts) (
 	}
 
 	if st, err := checkStatus(resp); err != nil {
-		return &QueueFaxResp{Status: st, ResultError: fmt.Sprint(err)}, nil
+		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
 	}
 
 	var result QueueFaxResp

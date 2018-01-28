@@ -17,7 +17,6 @@ type FaxUsageOpts struct {
 }
 
 // FaxUsageResp is the response from a GetFaxUsage operation.
-// Note, error message from Result, if any, will be stored in ResultError.
 type FaxUsageResp struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
@@ -29,7 +28,6 @@ type FaxUsageResp struct {
 		NumberOfFaxes int    `mapstructure:"NumberOfFaxes"`
 		NumberOfPages int    `mapstructure:"NumberOfPages"`
 	} `mapstructure:"Result"`
-	ResultError string
 }
 
 // GetFaxUsage reports usage for a specified user and period.
@@ -55,7 +53,7 @@ func (c *Client) GetFaxUsage(optArgs ...FaxUsageOpts) (*FaxUsageResp, error) {
 	}
 
 	if st, err := checkStatus(resp); err != nil {
-		return &FaxUsageResp{Status: st, ResultError: fmt.Sprint(err)}, nil
+		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
 	}
 
 	var result FaxUsageResp

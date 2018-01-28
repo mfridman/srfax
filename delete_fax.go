@@ -15,11 +15,9 @@ type DeleteFaxOpts struct {
 }
 
 // DeleteFaxResp is the response from a DeleteFax operation.
-// Note, error message from Result, if any, will be stored in ResultError.
 type DeleteFaxResp struct {
-	Status      string `mapstructure:"Status"`
-	Result      string `mapstructure:"Result"`
-	ResultError string
+	Status string `mapstructure:"Status"`
+	Result string `mapstructure:"Result"`
 }
 
 // DeleteFax deletes either, one ore more, received or sent faxes.
@@ -76,7 +74,7 @@ func (c *Client) DeleteFax(ids []string, dir string, optArgs ...DeleteFaxOpts) (
 	}
 
 	if st, err := checkStatus(resp); err != nil {
-		return &DeleteFaxResp{Status: st, ResultError: fmt.Sprint(err)}, nil
+		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
 	}
 
 	var result DeleteFaxResp
