@@ -1,6 +1,10 @@
 package srfax
 
-import "github.com/pkg/errors"
+import (
+	"strings"
+
+	"github.com/pkg/errors"
+)
 
 // ClientCfg specifies parameters required for establishing an SRFax client.
 type ClientCfg struct {
@@ -38,8 +42,8 @@ func (c *Client) CheckAuth() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if !(s.Status == "Success" && s.ResultError == "") {
-		return false, errors.Errorf("Authentication [%s]: [%s]", s.Status, s.ResultError)
+	if strings.ToLower(s.Status) != "success" {
+		return false, errors.Errorf("No Result errors but Status was not Success: [%v]", s.Status)
 	}
 	return true, nil
 }
