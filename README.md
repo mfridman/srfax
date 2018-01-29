@@ -41,7 +41,7 @@ If SRFax had publicly available errors then could compose error types, but for n
 
 ## Usage
 
-Import the library.
+Import the library. `"github.com/mfridman/srfax"`
 
 To begin using the client initialize a `ClientCfg` and pass it to `NewClient`.
 
@@ -57,18 +57,27 @@ if err != nil {
 }
 ```
 
-With a `*Client` one runs all SRFax operations.
+With a `*Client` one runs an SRFax operation, POST to API and decodes into the corresponding response struct.
+
+The caller has the flexibility to implement their own POST and pass a `map[string]interface{}` directly to `DecodeResp` along with the corresponding response type.
 
 #### Example:
 
 ```go
-resp, err := client.GetFaxUsage() // resp is a pointer to a FaxUsageResp.
-if err != nil {
-    // check errors
+msg, err := client.GetFaxUsage() 
+if err != nil { // check errors 
 }
 
-// for testing purposes use convenience func PP to pretty print response to terminal. PP uses MarshalIndent.
-PP(resp) 
+ms, err := srfax.SendPost(msg)
+if err != nil { // check errors
+}
+
+var resp srfax.FaxUsageResp
+if err := srfax.DecodeResp(ms, &resp); err != nil { // check errors
+}
+
+// for testing purposes use convenience func PP to pretty print response to terminal.
+srfax.PP(msg)
 ```
 Output:
 ```json
@@ -81,7 +90,7 @@ Output:
         "UserID": 00001,
         "SubUserID": 0,
         "NumberOfFaxes": 140,
-        "NumberOfPages": 40
+        "NumberOfPages": 240
     }]
 }
 ```

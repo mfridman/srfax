@@ -1,10 +1,9 @@
 package srfax
 
 import (
-	"fmt"
-
-	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
+	"bytes"
+	"encoding/json"
+	"io"
 )
 
 // FaxInboxOpts contains optional arguments when retrieving inbox items.
@@ -35,7 +34,7 @@ type FaxInboxResp struct {
 }
 
 // GetFaxInbox retrieves a list of faxes received for a specified period of time.
-func (c *Client) GetFaxInbox(optArgs ...FaxInboxOpts) (*FaxInboxResp, error) {
+func (c *Client) GetFaxInbox(optArgs ...FaxInboxOpts) (io.Reader, error) {
 	opts := FaxInboxOpts{}
 	if len(optArgs) >= 1 {
 		opts = optArgs[0]
@@ -51,26 +50,10 @@ func (c *Client) GetFaxInbox(optArgs ...FaxInboxOpts) (*FaxInboxResp, error) {
 		FaxInboxOpts: opts,
 	}
 
-	resp, err := sendPost(msg, c.url)
+	b, err := json.Marshal(&msg)
 	if err != nil {
-		return nil, errors.Wrap(err, "sendPost failed")
-	}
-
-	if st, err := checkStatus(resp); err != nil {
-		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
-	}
-
-	var result FaxInboxResp
-	var md mapstructure.Metadata
-	cfg := &mapstructure.DecoderConfig{
-		WeaklyTypedInput: true,
-		Metadata:         &md,
-		Result:           &result,
-	}
-
-	if err := decodeResp(resp, cfg); err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	return bytes.NewReader(b), nil
 }

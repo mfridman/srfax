@@ -1,10 +1,9 @@
 package srfax
 
 import (
-	"fmt"
-
-	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
+	"bytes"
+	"encoding/json"
+	"io"
 )
 
 // FaxUsageOpts contains optional arguments to modify fax usage report.
@@ -30,7 +29,7 @@ type FaxUsageResp struct {
 }
 
 // GetFaxUsage reports usage for a specified user and period.
-func (c *Client) GetFaxUsage(optArgs ...FaxUsageOpts) (*FaxUsageResp, error) {
+func (c *Client) GetFaxUsage(optArgs ...FaxUsageOpts) (io.Reader, error) {
 	opts := FaxUsageOpts{}
 	if len(optArgs) >= 1 {
 		opts = optArgs[0]
@@ -46,26 +45,10 @@ func (c *Client) GetFaxUsage(optArgs ...FaxUsageOpts) (*FaxUsageResp, error) {
 		FaxUsageOpts: opts,
 	}
 
-	resp, err := sendPost(msg, c.url)
+	b, err := json.Marshal(&msg)
 	if err != nil {
-		return nil, errors.Wrap(err, "sendPost failed")
-	}
-
-	if st, err := checkStatus(resp); err != nil {
-		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
-	}
-
-	var result FaxUsageResp
-	var md mapstructure.Metadata
-	cfg := &mapstructure.DecoderConfig{
-		WeaklyTypedInput: true,
-		Metadata:         &md,
-		Result:           &result,
-	}
-
-	if err := decodeResp(resp, cfg); err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	return bytes.NewReader(b), nil
 }

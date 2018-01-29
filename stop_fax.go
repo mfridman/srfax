@@ -1,9 +1,10 @@
 package srfax
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"io"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
@@ -16,7 +17,7 @@ type StopFaxResp struct {
 // StopFax deletes a specified queued fax which has not yet been processed.
 //
 // Must supply a valid FaxDetailsID, which is a return value when calling QueueFax.
-func (c *Client) StopFax(id int) (*StopFaxResp, error) {
+func (c *Client) StopFax(id int) (io.Reader, error) {
 
 	if id <= 0 {
 		return nil, errors.New("id (sFaxDetailsID) cannot be zero or negative number")
@@ -32,26 +33,10 @@ func (c *Client) StopFax(id int) (*StopFaxResp, error) {
 		FaxDetailsID: id,
 	}
 
-	resp, err := sendPost(msg, c.url)
+	b, err := json.Marshal(&msg)
 	if err != nil {
-		return nil, errors.Wrap(err, "sendPost failed")
-	}
-
-	if st, err := checkStatus(resp); err != nil {
-		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
-	}
-
-	var result StopFaxResp
-	var md mapstructure.Metadata
-	cfg := &mapstructure.DecoderConfig{
-		WeaklyTypedInput: true,
-		Metadata:         &md,
-		Result:           &result,
-	}
-
-	if err := decodeResp(resp, cfg); err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	return bytes.NewReader(b), nil
 }

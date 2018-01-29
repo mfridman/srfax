@@ -1,13 +1,14 @@
 package srfax
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"io"
 	"log"
 	"reflect"
 	"strconv"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
@@ -67,7 +68,7 @@ type QueueFaxResp struct {
 //
 // if files is an empty slice, the CoverPage opts must be enabled. Otherwise will receive
 // error: No Files to Fax /
-func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) (*QueueFaxResp, error) {
+func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) (io.Reader, error) {
 	msg := map[string]interface{}{
 		"action":       actionQueueFax,
 		"access_id":    c.AccessID,
@@ -137,28 +138,12 @@ func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) 
 		}
 	}
 
-	resp, err := sendPost(msg, c.url)
+	b, err := json.Marshal(&msg)
 	if err != nil {
-		return nil, errors.Wrap(err, "sendPost failed")
-	}
-
-	if st, err := checkStatus(resp); err != nil {
-		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
-	}
-
-	var result QueueFaxResp
-	var md mapstructure.Metadata
-	cfg := &mapstructure.DecoderConfig{
-		WeaklyTypedInput: true,
-		Metadata:         &md,
-		Result:           &result,
-	}
-
-	if err := decodeResp(resp, cfg); err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	return bytes.NewReader(b), nil
 }
 
 // hasEmpty takes a map to check if any value is empty. If a value is empty

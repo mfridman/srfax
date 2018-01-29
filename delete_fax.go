@@ -1,11 +1,12 @@
 package srfax
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"io"
 	"strconv"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
@@ -27,7 +28,7 @@ type DeleteFaxResp struct {
 // wrong name, correct id = deletion ... foobar|31524120baz will trigger a deletion
 // correct name, wrong id = nothing
 // wrong name, wrong id = nothing (just in case)
-func (c *Client) DeleteFax(ids []string, dir string) (*DeleteFaxResp, error) {
+func (c *Client) DeleteFax(ids []string, dir string) (io.Reader, error) {
 	if !(dir == "IN" || dir == "OUT") {
 		return nil, errors.New(`dir (direction) must be one of either "IN" or "OUT"`)
 	}
@@ -59,26 +60,10 @@ func (c *Client) DeleteFax(ids []string, dir string) (*DeleteFaxResp, error) {
 		}
 	}
 
-	resp, err := sendPost(msg, c.url)
+	b, err := json.Marshal(&msg)
 	if err != nil {
-		return nil, errors.Wrap(err, "sendPost failed")
-	}
-
-	if st, err := checkStatus(resp); err != nil {
-		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
-	}
-
-	var result DeleteFaxResp
-	var md mapstructure.Metadata
-	cfg := &mapstructure.DecoderConfig{
-		WeaklyTypedInput: true,
-		Metadata:         &md,
-		Result:           &result,
-	}
-
-	if err := decodeResp(resp, cfg); err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	return bytes.NewReader(b), nil
 }

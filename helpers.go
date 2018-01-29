@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -41,6 +42,7 @@ type ResultError struct {
 
 func (r *ResultError) Error() string { return fmt.Sprintf("%v: %v", r.Status, r.Raw) }
 
+// DEPRECATED, to be cleaned up
 // decodeResp is a wrapper around mitchell's mapstructure pkg. Mainly used for debugging
 // parts of the API as the docs don't always line up with what comes across the wire.
 func decodeResp(resp map[string]interface{}, cfg *mapstructure.DecoderConfig) error {
@@ -58,25 +60,18 @@ func decodeResp(resp map[string]interface{}, cfg *mapstructure.DecoderConfig) er
 	return nil
 }
 
-// sendPost is a wrapper around Post. Sends JSON encoded string to SRFax and attempts
-// to decode response.
-func sendPost(msg interface{}, url string) (map[string]interface{}, error) {
+// SendPost is a wrapper around Post. Sends JSON encoded string to SRFax and decodes response.
+func SendPost(r io.Reader) (map[string]interface{}, error) {
+	// SRFax API url.
+	url := "https://www.srfax.com/SRF_SecWebSvc.php"
 
-	// write out msg to bytes buffer
-	r := new(bytes.Buffer)
-	err := json.NewEncoder(r).Encode(msg)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed writing out to bytes buffer")
-	}
-
-	timeout := time.Duration(30 * time.Second)
 	client := http.Client{
-		Timeout: timeout,
+		Timeout: time.Duration(30 * time.Second),
 	}
 
 	resp, err := client.Post(url, "application/json", r)
 	if err != nil {
-		return nil, errors.Wrap(err, "posting message")
+		return nil, errors.Wrap(err, "error with POST request")
 	}
 	defer resp.Body.Close()
 
@@ -84,21 +79,21 @@ func sendPost(msg interface{}, url string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("unexpected status: %v", resp.Status)
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Wrap(err, "reading response body from POST")
+		return nil, errors.Wrap(err, "error reading response body from POST")
 	}
 
-	// DEBUG only
+	// DEBUG only, show raw body coming back across the wire.
 	// fmt.Println("DEBUG RAW: ", string(b))
 
-	var v map[string]interface{}
-	err = json.NewDecoder(bytes.NewReader(b)).Decode(&v)
+	var ms map[string]interface{}
+	err = json.NewDecoder(bytes.NewReader(body)).Decode(&ms)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed decoding response from POST")
 	}
 
-	return v, nil
+	return ms, nil
 }
 
 /*
@@ -181,4 +176,33 @@ func IDFromName(s string) (int, error) {
 		return 0, errors.Wrap(err, "could not get ID from filename")
 	}
 	return n, nil
+}
+
+// DecodeResp decodes map into the underlying response type.
+// It is a wrapper around Mitchell's mapstructure pkg. Mainly used because
+// the docs don't always match what comes across the wire.
+func DecodeResp(ms map[string]interface{}, i interface{}) error {
+	if st, err := checkStatus(ms); err != nil {
+		return &ResultError{Status: st, Raw: fmt.Sprint(err)}
+	}
+
+	var md mapstructure.Metadata
+	cfg := &mapstructure.DecoderConfig{
+		WeaklyTypedInput: true,
+		Metadata:         &md,
+		Result:           i,
+	}
+
+	decoder, err := mapstructure.NewDecoder(cfg)
+	if err != nil {
+		return errors.Wrapf(err, "mapstructure new decoder config error: [%+v]", cfg)
+	}
+	if err := decoder.Decode(ms); err != nil {
+		return errors.Wrapf(err, "mapstructure Decode error: [%+v]", ms)
+	}
+
+	// DEBUG only
+	// fmt.Println("DEBUG unused keys: ", cfg.Metadata.Unused)
+
+	return nil
 }

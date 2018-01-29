@@ -1,11 +1,12 @@
 package srfax
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"io"
 	"strconv"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
@@ -26,7 +27,7 @@ type ViewedStatusResp struct {
 //
 // If updating a fax based on sFaxDetailsID, pass in the number as a string.
 // Formatting handled automatically.
-func (c *Client) UpdateViewedStatus(ident, dir, view string) (*ViewedStatusResp, error) {
+func (c *Client) UpdateViewedStatus(ident, dir, view string) (io.Reader, error) {
 	// TODO consider wrapping the string params "ident, dir, view" into a struct
 
 	msg := struct {
@@ -53,26 +54,10 @@ func (c *Client) UpdateViewedStatus(ident, dir, view string) (*ViewedStatusResp,
 		msg.FaxDetailsID = n
 	}
 
-	resp, err := sendPost(msg, c.url)
+	b, err := json.Marshal(&msg)
 	if err != nil {
-		return nil, errors.Wrap(err, "sendPost failed")
-	}
-
-	if st, err := checkStatus(resp); err != nil {
-		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
-	}
-
-	var result ViewedStatusResp
-	var md mapstructure.Metadata
-	cfg := &mapstructure.DecoderConfig{
-		WeaklyTypedInput: true,
-		Metadata:         &md,
-		Result:           &result,
-	}
-
-	if err := decodeResp(resp, cfg); err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	return bytes.NewReader(b), nil
 }

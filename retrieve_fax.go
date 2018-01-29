@@ -1,12 +1,13 @@
 package srfax
 
 import (
+	"bytes"
 	"encoding/base64"
-	"fmt"
+	"encoding/json"
+	"io"
 	"strconv"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
@@ -42,7 +43,7 @@ func (r *RetrieveFaxResp) DecodeResult() ([]byte, error) {
 //
 // If operation succeeds the Result value contain a base64-encoded string.
 // The file format will be "PDF" or "TIF" – defaults to account settings if FaxFormat not supplied in optional args.
-func (c *Client) RetrieveFax(ident, dir string, optArgs ...RetrieveFaxOpts) (*RetrieveFaxResp, error) {
+func (c *Client) RetrieveFax(ident, dir string, optArgs ...RetrieveFaxOpts) (io.Reader, error) {
 	if !(dir == "IN" || dir == "OUT") {
 		return nil, errors.New(`dir (direction) must be one of either "IN" or "OUT"`)
 	}
@@ -76,26 +77,10 @@ func (c *Client) RetrieveFax(ident, dir string, optArgs ...RetrieveFaxOpts) (*Re
 		msg.FaxDetailsID = n
 	}
 
-	resp, err := sendPost(msg, c.url)
+	b, err := json.Marshal(&msg)
 	if err != nil {
-		return nil, errors.Wrap(err, "sendPost failed")
-	}
-
-	if st, err := checkStatus(resp); err != nil {
-		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
-	}
-
-	var result RetrieveFaxResp
-	var md mapstructure.Metadata
-	cfg := &mapstructure.DecoderConfig{
-		WeaklyTypedInput: true,
-		Metadata:         &md,
-		Result:           &result,
-	}
-
-	if err := decodeResp(resp, cfg); err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	return bytes.NewReader(b), nil
 }

@@ -1,10 +1,11 @@
 package srfax
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"io"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
@@ -33,7 +34,7 @@ type MulFaxStatusResp struct {
 // GetMulFaxStatus retrieves status of multiple sent faxes. Works only with outbound faxes.
 // Accepts a slice of ids, i.e., FaxDetailIDs. Formatting handled automatically.
 // FaxDetailsID returned from a QueueFax operation.
-func (c *Client) GetMulFaxStatus(ids []string) (*MulFaxStatusResp, error) {
+func (c *Client) GetMulFaxStatus(ids []string) (io.Reader, error) {
 
 	if len(ids) == 0 {
 		return nil, errors.New("when getting multiple fax status, must supply one or more FaxDetailsIDs (ids)")
@@ -49,26 +50,10 @@ func (c *Client) GetMulFaxStatus(ids []string) (*MulFaxStatusResp, error) {
 		Client: *c,
 	}
 
-	resp, err := sendPost(msg, c.url)
+	b, err := json.Marshal(&msg)
 	if err != nil {
-		return nil, errors.Wrap(err, "sendPost failed")
-	}
-
-	if st, err := checkStatus(resp); err != nil {
-		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
-	}
-
-	var result MulFaxStatusResp
-	var md mapstructure.Metadata
-	cfg := &mapstructure.DecoderConfig{
-		WeaklyTypedInput: true,
-		Metadata:         &md,
-		Result:           &result,
-	}
-
-	if err := decodeResp(resp, cfg); err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	return bytes.NewReader(b), nil
 }

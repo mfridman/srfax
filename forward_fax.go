@@ -1,11 +1,12 @@
 package srfax
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"io"
 	"strconv"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 )
 
@@ -38,7 +39,7 @@ type ForwardFaxResp struct {
 //
 // ident is the sFaxDetailsID or sFaxFileName returned from GetFaxInbox or GetFaxOutbox
 // dir is the direction; "IN" or "OUT" for inbound or outbound fax
-func (c *Client) ForwardFax(dir, ident string, fc ForwardFaxCfg, optArgs ...ForwardFaxOpts) (*ForwardFaxResp, error) {
+func (c *Client) ForwardFax(dir, ident string, fc ForwardFaxCfg, optArgs ...ForwardFaxOpts) (io.Reader, error) {
 
 	if !(dir == "IN" || dir == "OUT") {
 		return nil, errors.New(`dir (direction) must be one of either "IN" or "OUT"`)
@@ -86,27 +87,10 @@ func (c *Client) ForwardFax(dir, ident string, fc ForwardFaxCfg, optArgs ...Forw
 		msg.FaxDetailsID = n
 	}
 
-	resp, err := sendPost(msg, c.url)
+	b, err := json.Marshal(&msg)
 	if err != nil {
-		return nil, errors.Wrap(err, "sendPost failed")
-	}
-
-	if st, err := checkStatus(resp); err != nil {
-		return nil, &ResultError{Status: st, Raw: fmt.Sprint(err)}
-	}
-
-	var result ForwardFaxResp
-	var md mapstructure.Metadata
-	cfg := &mapstructure.DecoderConfig{
-		WeaklyTypedInput: true,
-		Metadata:         &md,
-		Result:           &result,
-	}
-
-	if err := decodeResp(resp, cfg); err != nil {
 		return nil, err
 	}
 
-	return &result, nil
-
+	return bytes.NewReader(b), nil
 }
