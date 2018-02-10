@@ -76,8 +76,8 @@ var resp srfax.FaxUsageResp
 if err := srfax.DecodeResp(ms, &resp); err != nil { // check errors
 }
 
-// for testing purposes use convenience func PP to pretty print response to terminal.
-srfax.PP(msg)
+// use convenience func PP to pretty print response to terminal.
+srfax.PP(resp)
 ```
 Output:
 ```json
