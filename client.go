@@ -42,7 +42,7 @@ func (c *Client) CheckAuth() (bool, error) {
 		return false, err
 	}
 
-	var resp FaxUsageResp
+	var resp GetFaxUsageResp
 	if err := DecodeResp(msg, &resp); err != nil {
 		return false, err
 	}
