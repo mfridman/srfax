@@ -57,36 +57,41 @@ if err != nil {
 }
 ```
 
-With a `*Client` one runs an SRFax operation, POST to API and decodes into the corresponding response struct.
+With a `*Client` one runs an SRFax operation to obtain a request struct (or map), sends the request via POST and decodes the response into the corresponding struct.
 
-The caller has the flexibility to implement their own POST and pass a `map[string]interface{}` directly to `DecodeResp` along with the corresponding response type.
+User's of this library have the flexibility to implement their own POST and pass a `map[string]interface{}` directly to `DecodeResp` along with the corresponding response type.
 
 #### Example:
 
 ```go
-msg, err := client.GetFaxUsage() 
-if err != nil { // check errors 
+req, err := client.GetFaxUsage()
+if err != nil {
+	// handle error
 }
 
-ms, err := srfax.SendPost(msg)
-if err != nil { // check errors
+msg, err := srfax.SendPost(req)
+if err != nil {
+	// handle error
 }
 
-var resp srfax.FaxUsageResp
-if err := srfax.DecodeResp(ms, &resp); err != nil { // check errors
+var resp srfax.GetFaxUsageResp
+if err := srfax.DecodeResp(msg, &resp); err != nil {
+	// handle error
 }
 
 // use convenience func PP to pretty print response to terminal.
 srfax.PP(resp)
 ```
+
 Output:
+
 ```json
 {
     "Status": "Success",
     "Result": [{
         "Period": "ALL",
-        "ClientName": "mike",
-        "BillingNumber": "m@frid.io",
+        "ClientName": "Michael Fridman",
+        "BillingNumber": "mf192@icloud.com",
         "UserID": 00001,
         "SubUserID": 0,
         "NumberOfFaxes": 140,
