@@ -1,14 +1,5 @@
 package srfax
 
-import (
-	"bytes"
-	"encoding/json"
-	"io"
-	"strings"
-
-	"github.com/pkg/errors"
-)
-
 // MulFaxStatusResp represents the status of multiple sent faxes.
 type MulFaxStatusResp struct {
 	Status string `mapstructure:"Status"`
@@ -31,29 +22,27 @@ type MulFaxStatusResp struct {
 	} `mapstructure:"Result"`
 }
 
+// MulFaxStatusReq defines the POST variables for a GetMulFaxStatus request
+type MulFaxStatusReq struct {
+	Action string `json:"action"`
+	Client
+	IDs string `json:"sFaxDetailsID"`
+}
+
 // GetMulFaxStatus retrieves status of multiple sent faxes. Works only with outbound faxes.
-// Accepts a slice of ids, i.e., FaxDetailIDs. Formatting handled automatically.
-// FaxDetailsID returned from a QueueFax operation.
-func (c *Client) GetMulFaxStatus(ids []string) (io.Reader, error) {
+// Multiple FaxDetailIDs (ids) can be requested by separating each FaxDetailsID with a "|" (pipe) character.
+// Where FaxDetailsID returned from a QueueFax operation.
+func (c *Client) GetMulFaxStatus(ids string) (*MulFaxStatusReq, error) {
 
-	if len(ids) == 0 {
-		return nil, errors.New("when getting multiple fax status, must supply one or more FaxDetailsIDs (ids)")
-	}
+	// if len(ids) == 0 {
+	// 	return nil, errors.New("when getting multiple fax status, must supply one or more FaxDetailsIDs (ids)")
+	// }
 
-	msg := struct {
-		Action string `json:"action"`
-		ID     string `json:"sFaxDetailsID"`
-		Client
-	}{
+	req := MulFaxStatusReq{
 		Action: actionGetMulFaxStatus,
-		ID:     strings.Join(ids, "|"),
+		IDs:    ids,
 		Client: *c,
 	}
 
-	b, err := json.Marshal(&msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(b), nil
+	return &req, nil
 }

@@ -1,10 +1,7 @@
 package srfax
 
 import (
-	"bytes"
 	"encoding/base64"
-	"encoding/json"
-	"io"
 	"strconv"
 	"strings"
 
@@ -36,31 +33,34 @@ func (r *RetrieveFaxResp) DecodeResult() ([]byte, error) {
 	return b, nil
 }
 
+// RetrieveFaxReq defines the POST variables for a RetrieveFax request
+type RetrieveFaxReq struct {
+	Action string `json:"action"`
+	Client
+	FaxDetailsID int    `json:"sFaxDetailsID,omitempty"` // Either the FaxFileName or the FaxDetailsID must be supplied
+	FaxFileName  string `json:"sFaxFileName,omitempty"`  // Either the FaxFileName or the FaxDetailsID must be supplied
+	Direction    string `json:"sDirection"`              // "IN" or "OUT" for inbound or outbound fax
+	RetrieveFaxOpts
+}
+
 // RetrieveFax returns a sent or received fax file in PDF or TIFF format.
 //
-// ident is the sFaxDetailsID or sFaxFileName returned from GetFaxInbox or GetFaxOutbox
-// dir is the direction; "IN" or "OUT" for inbound or outbound fax
+// ident is the sFaxDetailsID & sFaxFileName returned from GetFaxInbox or GetFaxOutbox,
+// only one of sFaxDetailsID or sFaxFileName must be supplied as a string.
 //
 // If operation succeeds the Result value contain a base64-encoded string.
 // The file format will be "PDF" or "TIF" – defaults to account settings if FaxFormat not supplied in optional args.
-func (c *Client) RetrieveFax(ident, dir string, optArgs ...RetrieveFaxOpts) (io.Reader, error) {
-	if !(dir == "IN" || dir == "OUT") {
-		return nil, errors.New(`dir (direction) must be one of either "IN" or "OUT"`)
-	}
-
+func (c *Client) RetrieveFax(ident, dir string, optArgs ...RetrieveFaxOpts) (*RetrieveFaxReq, error) {
 	opts := RetrieveFaxOpts{}
 	if len(optArgs) >= 1 {
 		opts = optArgs[0]
 	}
 
-	msg := struct {
-		Action string `json:"action"`
-		Client
-		FaxDetailsID int    `json:"sFaxDetailsID,omitempty"`
-		FaxFileName  string `json:"sFaxFileName,omitempty"`
-		Direction    string `json:"sDirection"`
-		RetrieveFaxOpts
-	}{
+	if !(dir == inbound || dir == outbound) {
+		return nil, errors.Errorf("Direction must be either: %s or %s", inbound, outbound)
+	}
+
+	req := RetrieveFaxReq{
 		Action:          actionRetrieveFax,
 		Client:          *c,
 		Direction:       dir,
@@ -68,19 +68,14 @@ func (c *Client) RetrieveFax(ident, dir string, optArgs ...RetrieveFaxOpts) (io.
 	}
 
 	if strings.Contains(ident, "|") {
-		msg.FaxFileName = ident
+		req.FaxFileName = ident
 	} else {
 		n, err := strconv.Atoi(ident)
 		if err != nil {
-			return nil, errors.New("failed id string to int conversion")
+			return nil, errors.New("failed ident string to int conversion")
 		}
-		msg.FaxDetailsID = n
+		req.FaxDetailsID = n
 	}
 
-	b, err := json.Marshal(&msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(b), nil
+	return &req, nil
 }

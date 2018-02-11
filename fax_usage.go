@@ -1,11 +1,5 @@
 package srfax
 
-import (
-	"bytes"
-	"encoding/json"
-	"io"
-)
-
 // FaxUsageOpts contains optional arguments to modify fax usage report.
 type FaxUsageOpts struct {
 	Period          string `json:"sPeriod,omitempty"`
@@ -28,27 +22,25 @@ type FaxUsageResp struct {
 	} `mapstructure:"Result"`
 }
 
+// FaxUsageReq defines the POST variables for a GetFaxUsage request
+type FaxUsageReq struct {
+	Action string `json:"action"`
+	Client
+	FaxUsageOpts
+}
+
 // GetFaxUsage reports usage for a specified user and period.
-func (c *Client) GetFaxUsage(optArgs ...FaxUsageOpts) (io.Reader, error) {
+func (c *Client) GetFaxUsage(optArgs ...FaxUsageOpts) (*FaxUsageReq, error) {
 	opts := FaxUsageOpts{}
 	if len(optArgs) >= 1 {
 		opts = optArgs[0]
 	}
 
-	msg := struct {
-		Action string `json:"action"`
-		Client
-		FaxUsageOpts
-	}{
+	req := FaxUsageReq{
 		Action:       actionGetFaxUsage,
 		Client:       *c,
 		FaxUsageOpts: opts,
 	}
 
-	b, err := json.Marshal(&msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(b), nil
+	return &req, nil
 }

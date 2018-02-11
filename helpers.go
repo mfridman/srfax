@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,21 +15,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
-)
-
-const (
-	// SRFax specific action verbs. Every POST request will use one of the following:
-	actionQueueFax           = "Queue_Fax"
-	actionGetFaxStatus       = "Get_FaxStatus"
-	actionGetMulFaxStatus    = "Get_MultiFaxStatus"
-	actionGetFaxInbox        = "Get_Fax_Inbox"
-	actionGetFaxOutbox       = "Get_Fax_Outbox"
-	actionForwardFax         = "Forward_Fax"
-	actionRetrieveFax        = "Retrieve_Fax"
-	actionUpdateViewedStatus = "Update_Viewed_Status"
-	actionDeleteFax          = "Delete_Fax"
-	actionStopFax            = "Stop_Fax"
-	actionGetFaxUsage        = "Get_Fax_Usage"
 )
 
 // ResultError represents an error when Result returns Failed.
@@ -61,7 +45,7 @@ func decodeResp(resp map[string]interface{}, cfg *mapstructure.DecoderConfig) er
 }
 
 // SendPost is a wrapper around Post. Sends JSON encoded string to SRFax and decodes response.
-func SendPost(r io.Reader) (map[string]interface{}, error) {
+func SendPost(req interface{}) (map[string]interface{}, error) {
 	// SRFax API url.
 	url := "https://www.srfax.com/SRF_SecWebSvc.php"
 
@@ -69,7 +53,12 @@ func SendPost(r io.Reader) (map[string]interface{}, error) {
 		Timeout: time.Duration(30 * time.Second),
 	}
 
-	resp, err := client.Post(url, "application/json", r)
+	by, err := json.Marshal(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal request")
+	}
+
+	resp, err := client.Post(url, "application/json", bytes.NewReader(by))
 	if err != nil {
 		return nil, errors.Wrap(err, "error with POST request")
 	}

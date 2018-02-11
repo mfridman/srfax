@@ -1,9 +1,6 @@
 package srfax
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
 	"strconv"
 	"strings"
 
@@ -14,6 +11,13 @@ import (
 type DeleteFaxResp struct {
 	Status string `mapstructure:"Status"`
 	Result string `mapstructure:"Result"`
+}
+
+// DeleteFaxReq defines the POST variables for a DeleteFax request
+type DeleteFaxReq struct {
+	Action string `json:"action"`
+	Client
+	// difficult to implement because struct field names are the variables themselves
 }
 
 // DeleteFax deletes either, one ore more, received or sent faxes.
@@ -28,8 +32,8 @@ type DeleteFaxResp struct {
 // wrong name, correct id = deletion ... foobar|31524120baz will trigger a deletion
 // correct name, wrong id = nothing
 // wrong name, wrong id = nothing (just in case)
-func (c *Client) DeleteFax(ids []string, dir string) (io.Reader, error) {
-	if !(dir == "IN" || dir == "OUT") {
+func (c *Client) DeleteFax(ids []string, dir string) (map[string]interface{}, error) {
+	if !(dir == inbound || dir == outbound) {
 		return nil, errors.New(`dir (direction) must be one of either "IN" or "OUT"`)
 	}
 
@@ -60,10 +64,5 @@ func (c *Client) DeleteFax(ids []string, dir string) (io.Reader, error) {
 		}
 	}
 
-	b, err := json.Marshal(&msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(b), nil
+	return msg, nil
 }

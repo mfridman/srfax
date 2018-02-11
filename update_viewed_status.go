@@ -1,12 +1,6 @@
 package srfax
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
-	"strconv"
-	"strings"
-
 	"github.com/pkg/errors"
 )
 
@@ -16,48 +10,45 @@ type ViewedStatusResp struct {
 	Result string `mapstructure:"Result"`
 }
 
+// ViewedStatusCfg contains mandatory arguments when updating the viewed status of a fax.
+type ViewedStatusCfg struct {
+	FaxDetailsID int    `json:"sFaxDetailsID,omitempty"` // Either the FaxFileName or the FaxDetailsID must be supplied
+	FaxFileName  string `json:"sFaxFileName,omitempty"`  // Either the FaxFileName or the FaxDetailsID must be supplied
+	Direction    string `json:"sDirection"`              // "IN" or "OUT" for inbound or outbound fax
+	MarkAsViewed string `json:"sMarkasViewed"`           // "Y" marks fax READ, "N" marks fax UNREAD
+}
+
+// ViewedStatusReq defines the POST variables for a UpdateViewedStatus request
+type ViewedStatusReq struct {
+	Action string `json:"action"`
+	Client
+	ViewedStatusCfg
+}
+
 // UpdateViewedStatus marks an inbound or outbound fax as read or unread.
 //
-// dir (direction) will be "IN" or "OUT" for inbound or outbound fax.
-// view will be "Y" – mark fax as READ, or "N" – mark fax as UNREAD
 // A note about ident:
-//
-// when passing sFaxFileName, the entire name (including pipe and ID) must be supplied.
-// E.g., 20180101230101-8812-34_0|31524120
-//
-// If updating a fax based on sFaxDetailsID, pass in the number as a string.
-// Formatting handled automatically.
-func (c *Client) UpdateViewedStatus(ident, dir, view string) (io.Reader, error) {
-	// TODO consider wrapping the string params "ident, dir, view" into a struct
+// when passing FaxFileName, the entire name (including pipe and ID) must be supplied.
+// E.g., 20170101230101-8812-34_0|29124120
+func (c *Client) UpdateViewedStatus(cfg ViewedStatusCfg) (*ViewedStatusReq, error) {
 
-	msg := struct {
-		Action string `json:"action"`
-		Client
-		FaxDetailsID int    `json:"sFaxDetailsID,omitempty"` // mutually exclusive
-		FaxFileName  string `json:"sFaxFileName,omitempty"`  // mutually exclusive
-		Direction    string `json:"sDirection"`
-		MarkAsViewed string `json:"sMarkasViewed"`
-	}{
-		Action:       actionUpdateViewedStatus,
-		Client:       *c,
-		Direction:    dir,
-		MarkAsViewed: view,
+	if cfg.FaxDetailsID > 0 && cfg.FaxFileName != "" {
+		return nil, errors.New("Either FaxFileName or FaxDetailsID must be supplied, not both")
 	}
 
-	if strings.Contains(ident, "|") {
-		msg.FaxFileName = ident
-	} else {
-		n, err := strconv.Atoi(ident)
-		if err != nil {
-			return nil, errors.Errorf("failed updating viewed status. sFaxDetailsID (id) string to int conversion, got [%[1]v] of type [%[1]T].", ident)
-		}
-		msg.FaxDetailsID = n
+	if !(cfg.Direction == inbound || cfg.Direction == outbound) {
+		return nil, errors.Errorf("Direction must be either: %s or %s", inbound, outbound)
 	}
 
-	b, err := json.Marshal(&msg)
-	if err != nil {
-		return nil, err
+	if !(cfg.MarkAsViewed == yes || cfg.MarkAsViewed == no) {
+		return nil, errors.Errorf("MarkAsViewed must be either: %s or %s", yes, no)
 	}
 
-	return bytes.NewReader(b), nil
+	req := ViewedStatusReq{
+		Action:          actionUpdateViewedStatus,
+		Client:          *c,
+		ViewedStatusCfg: cfg,
+	}
+
+	return &req, nil
 }

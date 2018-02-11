@@ -1,10 +1,6 @@
 package srfax
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
-
 	"github.com/pkg/errors"
 )
 
@@ -14,29 +10,26 @@ type StopFaxResp struct {
 	Result string `mapstructure:"Result"`
 }
 
+// StopFaxReq defines the POST variables for a StopFax request
+type StopFaxReq struct {
+	Action string `json:"action"`
+	Client
+	FaxDetailsID int `json:"sFaxDetailsID"`
+}
+
 // StopFax deletes a specified queued fax which has not yet been processed.
-//
-// Must supply a valid FaxDetailsID, which is a return value when calling QueueFax.
-func (c *Client) StopFax(id int) (io.Reader, error) {
+// FaxDetailsID returned from Queue_Fax
+func (c *Client) StopFax(id int) (*StopFaxReq, error) {
 
 	if id <= 0 {
-		return nil, errors.New("id (sFaxDetailsID) cannot be zero or negative number")
+		return nil, errors.New("FaxDetailsID cannot be zero or negative number")
 	}
 
-	msg := struct {
-		Action string `json:"action"`
-		Client
-		FaxDetailsID int `json:"sFaxDetailsID"`
-	}{
+	req := StopFaxReq{
 		Action:       actionStopFax,
 		Client:       *c,
 		FaxDetailsID: id,
 	}
 
-	b, err := json.Marshal(&msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(b), nil
+	return &req, nil
 }

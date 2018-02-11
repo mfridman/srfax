@@ -1,10 +1,6 @@
 package srfax
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
-
 	"github.com/pkg/errors"
 )
 
@@ -27,28 +23,26 @@ type FaxStatusResp struct {
 	} `mapstructure:"Result"`
 }
 
+// FaxStatusReq defines the POST variables for a GetFaxStatus request
+type FaxStatusReq struct {
+	Action string `json:"action"`
+	Client
+	ID int `json:"sFaxDetailsID"`
+}
+
 // GetFaxStatus retrieves the status of a single sent fax. Works only with outbound faxes.
-// Accepts single id, i.e., FaxDetailID. Where FaxDetailsID returned from a QueueFax operation.
-func (c *Client) GetFaxStatus(id int) (io.Reader, error) {
+// Accepts a single id, i.e., FaxDetailsID, which is the return value from a QueueFax operation.
+func (c *Client) GetFaxStatus(id int) (*FaxStatusReq, error) {
 
 	if id <= 0 {
-		return nil, errors.New("id (sFaxDetailsID) cannot be zero or negative number")
+		return nil, errors.New("id cannot be zero or negative number")
 	}
 
-	msg := struct {
-		Action string `json:"action"`
-		ID     int    `json:"sFaxDetailsID"`
-		Client
-	}{
+	req := FaxStatusReq{
 		Action: actionGetFaxStatus,
-		ID:     id,
 		Client: *c,
+		ID:     id,
 	}
 
-	b, err := json.Marshal(&msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(b), nil
+	return &req, nil
 }

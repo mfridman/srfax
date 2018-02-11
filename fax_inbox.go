@@ -1,11 +1,5 @@
 package srfax
 
-import (
-	"bytes"
-	"encoding/json"
-	"io"
-)
-
 // FaxInboxOpts contains optional arguments when retrieving inbox items.
 type FaxInboxOpts struct {
 	Period          string `json:"sPeriod,omitempty"`
@@ -33,27 +27,25 @@ type FaxInboxResp struct {
 	} `mapstructure:"Result"`
 }
 
+// FaxInboxReq defines the POST variables for a GetFaxInbox request
+type FaxInboxReq struct {
+	Action string `json:"action"`
+	Client
+	FaxInboxOpts
+}
+
 // GetFaxInbox retrieves a list of faxes received for a specified period of time.
-func (c *Client) GetFaxInbox(optArgs ...FaxInboxOpts) (io.Reader, error) {
+func (c *Client) GetFaxInbox(optArgs ...FaxInboxOpts) (*FaxInboxReq, error) {
 	opts := FaxInboxOpts{}
 	if len(optArgs) >= 1 {
 		opts = optArgs[0]
 	}
 
-	msg := struct {
-		Action string `json:"action"`
-		Client
-		FaxInboxOpts
-	}{
+	req := FaxInboxReq{
 		Action:       actionGetFaxInbox,
 		Client:       *c,
 		FaxInboxOpts: opts,
 	}
 
-	b, err := json.Marshal(&msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(b), nil
+	return &req, nil
 }

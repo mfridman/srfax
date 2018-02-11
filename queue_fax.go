@@ -1,9 +1,6 @@
 package srfax
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
 	"log"
 	"reflect"
 	"strconv"
@@ -68,7 +65,7 @@ type QueueFaxResp struct {
 //
 // if files is an empty slice, the CoverPage opts must be enabled. Otherwise will receive
 // error: No Files to Fax /
-func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) (io.Reader, error) {
+func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) (map[string]interface{}, error) {
 	msg := map[string]interface{}{
 		"action":       actionQueueFax,
 		"access_id":    c.AccessID,
@@ -87,15 +84,14 @@ func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) 
 		"ResultError": "Invalid CallerID provided / "
 		"ResultError": "Forbidden: Access is denied / Invalid Authentication."
 	*/
-	items, err := hasEmpty(msg)
-	if err != nil {
-		return nil, errors.Errorf("check QueueFaxCfg, the following cannot be empty: %v", items)
+	if err := failIfEmpty(msg); err != nil {
+		return nil, err
 	}
 
 	// build up optional, non-empty, options based on srfax tags through reflection.
 	// TODO this may not be the best approach. Hard to test and may be prone to error.
 	// Think about writing a function to parse optional args, build a map and merging with existing msg map.
-	if len(optArgs) >= 1 {
+	if len(optArgs) > 0 {
 		v := reflect.ValueOf(optArgs[0])
 
 		for i := 0; i < v.NumField(); i++ {
@@ -138,19 +134,14 @@ func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) 
 		}
 	}
 
-	b, err := json.Marshal(&msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(b), nil
+	return msg, nil
 }
 
-// hasEmpty takes a map to check if any value is empty. If a value is empty
+// failIfEmpty takes a map to check if any value is empty. If a value is empty
 // the corresponding key is stored in slice and error is returned.
 //
 // Convenience func to fail early in the event a mandatory config field is missing.
-func hasEmpty(m map[string]interface{}) ([]string, error) {
+func failIfEmpty(m map[string]interface{}) error {
 	em := make([]string, 0)
 
 	for k, v := range m {
@@ -158,9 +149,9 @@ func hasEmpty(m map[string]interface{}) ([]string, error) {
 			em = append(em, k)
 		}
 	}
-	if !(len(em) == 0) {
-		return em, errors.New("found empty value in map")
+	if len(em) != 0 {
+		return errors.Errorf("check QueueFaxCfg, the following cannot be empty: %s", strings.Join(em, ","))
 	}
 
-	return em, nil
+	return nil
 }

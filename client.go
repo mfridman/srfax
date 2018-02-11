@@ -32,18 +32,18 @@ type Client struct {
 // CheckAuth checks whether client is able to authenticate. A wrapper around the
 // GetFaxUsage method. Used for convenience to quickly check if access ID & PWD are valid.
 func (c *Client) CheckAuth() (bool, error) {
-	s, err := c.GetFaxUsage()
+	req, err := c.GetFaxUsage()
 	if err != nil {
 		return false, err
 	}
 
-	m, err := SendPost(s)
+	msg, err := SendPost(req)
 	if err != nil {
 		return false, err
 	}
 
 	var resp FaxUsageResp
-	if err := DecodeResp(m, &resp); err != nil {
+	if err := DecodeResp(msg, &resp); err != nil {
 		return false, err
 	}
 
