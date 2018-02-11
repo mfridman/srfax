@@ -1,5 +1,8 @@
 package srfax
 
+// apiURL is the SRFax API url.
+const apiURL = "https://www.srfax.com/SRF_SecWebSvc.php"
+
 const (
 	// SRFax specific action verbs. Every POST request will use one of the following:
 	actionQueueFax           = "Queue_Fax"

@@ -25,8 +25,6 @@ func (r *ResultError) Error() string { return fmt.Sprintf("%v: %v", r.Status, r.
 
 // SendPost is a wrapper around Post. Sends JSON encoded request to SRFax and decodes response body.
 func SendPost(req interface{}) (map[string]interface{}, error) {
-	// SRFax API url.
-	url := "https://www.srfax.com/SRF_SecWebSvc.php"
 
 	client := http.Client{
 		Timeout: time.Duration(30 * time.Second),
@@ -37,7 +35,7 @@ func SendPost(req interface{}) (map[string]interface{}, error) {
 		return nil, errors.Wrap(err, "failed to marshal request")
 	}
 
-	resp, err := client.Post(url, "application/json", bytes.NewReader(by))
+	resp, err := client.Post(apiURL, "application/json", bytes.NewReader(by))
 	if err != nil {
 		return nil, errors.Wrap(err, "error with POST request")
 	}
