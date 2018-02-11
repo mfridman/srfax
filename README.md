@@ -10,30 +10,27 @@ The official SRFax API documentation can be found [here](https://www.srfax.com/a
 
 ---
 
-A note about error handling:
+### A note about error handling
 
 This client will return an error if the Status value is "Failed". Do not attempt to access error messages via the Result field, use standard Go error handling instead.
 
 It is the caller's responsibility to check for errors prior to accessing a response struct. If error is not `nil` assume something has gone wrong.
 
-Caller can check for `*ResultError` error type and retrieve the original Status and Result message. Example:
+Caller can check for the `*ResultError` error type and retrieve the original Status and Result message. Example:
 
 ```go
 if err != nil {
 	switch e := err.(type) {
 	case *srfax.ResultError:
-		fmt.Println(e.Status)
-		fmt.Println(e.Raw)
+		fmt.Println(e.Status) // Failed
+		fmt.Println(e.Raw)    // Invalid Access Code / Password
 	}
 }
-// Failed
-// Invalid Access Code / Password
 
-fmt.Println(err)
-// Failed: Invalid Access Code / Password
+fmt.Println(err) // Failed: Invalid Access Code / Password
 ```
 
-If SRFax had publicly available errors then could compose error types, but for now `ResultError` will do.
+If SRFax had publicly available errors then could compose more specific error types, but for now `ResultError` will do.
 
 ## Installation
 
@@ -43,7 +40,7 @@ If SRFax had publicly available errors then could compose error types, but for n
 
 Import the library. `"github.com/mfridman/srfax"`
 
-Start by initializing a `ClientCfg` and pass it to `NewClient`.
+Start by initializing a `ClientCfg` and pass it to `NewClient`, where ID (account number) and Pwd (password) are unique to your SRFax Account.
 
 ```go
 cfg := srfax.ClientCfg{
@@ -57,25 +54,15 @@ if err != nil {
 }
 ```
 
-With a `*Client` one runs an SRFax operation to obtain a request struct (or map), sends the request via POST and decodes the response into the corresponding struct.
+With a `*Client` one runs all the supported SRFax operations. For each method this client will construct a request, send it via POST and decode the response into the corresponding type.
 
-User's of this library have the flexibility to implement their own POST and pass a `map[string]interface{}` directly to `DecodeResp` along with the corresponding response type.
+Examples for all methods can be found in the [wiki (wip)](https://github.com/mfridman/srfax/wiki). The following is a quick example
 
 #### Example:
 
 ```go
-req, err := client.GetFaxUsage()
+resp, err := client.GetFaxUsage() // resp is of type *GetFaxUsageResp
 if err != nil {
-	// handle error
-}
-
-msg, err := srfax.SendPost(req)
-if err != nil {
-	// handle error
-}
-
-var resp srfax.GetFaxUsageResp
-if err := srfax.DecodeResp(msg, &resp); err != nil {
 	// handle error
 }
 
