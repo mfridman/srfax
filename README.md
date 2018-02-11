@@ -43,12 +43,12 @@ If SRFax had publicly available errors then could compose error types, but for n
 
 Import the library. `"github.com/mfridman/srfax"`
 
-To begin using the client initialize a `ClientCfg` and pass it to `NewClient`.
+Start by initializing a `ClientCfg` and pass it to `NewClient`.
 
 ```go
 cfg := srfax.ClientCfg{
     ID:  00001,
-    PWD: "password",
+    Pwd: "password",
 }
 
 client, err := srfax.NewClient(cfg)
