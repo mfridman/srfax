@@ -5,10 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"reflect"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -26,25 +23,7 @@ type ResultError struct {
 
 func (r *ResultError) Error() string { return fmt.Sprintf("%v: %v", r.Status, r.Raw) }
 
-// DEPRECATED, to be cleaned up
-// decodeResp is a wrapper around mitchell's mapstructure pkg. Mainly used for debugging
-// parts of the API as the docs don't always line up with what comes across the wire.
-func decodeResp(resp map[string]interface{}, cfg *mapstructure.DecoderConfig) error {
-	decoder, err := mapstructure.NewDecoder(cfg)
-	if err != nil {
-		return errors.Wrapf(err, "mapstructure new decoder config error: [%+v]", cfg)
-	}
-	if err := decoder.Decode(resp); err != nil {
-		return errors.Wrapf(err, "mapstructure Decode error: [%+v]", resp)
-	}
-
-	// DEBUG only
-	// fmt.Println("DEBUG unused keys: ", cfg.Metadata.Unused)
-
-	return nil
-}
-
-// SendPost is a wrapper around Post. Sends JSON encoded string to SRFax and decodes response.
+// SendPost is a wrapper around Post. Sends JSON encoded request to SRFax and decodes response body.
 func SendPost(req interface{}) (map[string]interface{}, error) {
 	// SRFax API url.
 	url := "https://www.srfax.com/SRF_SecWebSvc.php"
@@ -73,7 +52,7 @@ func SendPost(req interface{}) (map[string]interface{}, error) {
 		return nil, errors.Wrap(err, "error reading response body from POST")
 	}
 
-	// DEBUG only, show raw body coming back across the wire.
+	// DEBUG only, show the raw body coming across the wire.
 	// fmt.Println("DEBUG RAW: ", string(b))
 
 	var ms map[string]interface{}
@@ -118,40 +97,13 @@ func checkStatus(ms map[string]interface{}) (string, error) {
 	return status, nil
 }
 
-// DEBUG ONLY, not exported and should not be used.
-func whereami() {
-	var outF string
-	pc, _, _, ok := runtime.Caller(0)
-	if !ok {
-		outF = "unnamed"
-	}
-	me := runtime.FuncForPC(pc)
-	if me == nil {
-		outF = "unnamed"
-	} else {
-		outF = me.Name()
-	}
-	log.Println(outF)
-}
-
 // PP is a convenience function to pretty print JSON.
 func PP(i interface{}) {
 	b, err := json.MarshalIndent(i, "", "  ")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
-	fmt.Printf("%v\n", string(b))
-}
-
-// DEBUG ONLY, not exported and should not be used.
-func nameOf(f interface{}) string {
-	v := reflect.ValueOf(f)
-	if v.Kind() == reflect.Func {
-		if rf := runtime.FuncForPC(v.Pointer()); rf != nil {
-			return rf.Name()
-		}
-	}
-	return v.String()
+	fmt.Println(string(b))
 }
 
 // IDFromName parses a filename string and returns the ID.
@@ -167,11 +119,10 @@ func IDFromName(s string) (int, error) {
 	return n, nil
 }
 
-// DecodeResp decodes map into the underlying response type.
-// It is a wrapper around Mitchell's mapstructure pkg. Mainly used because
-// the docs don't always match what comes across the wire.
-func DecodeResp(ms map[string]interface{}, i interface{}) error {
-	if st, err := checkStatus(ms); err != nil {
+// DecodeResp decodes response map into the underlying response type (rt).
+// It is a wrapper around Mitchell's mapstructure pkg.
+func DecodeResp(resp map[string]interface{}, rt interface{}) error {
+	if st, err := checkStatus(resp); err != nil {
 		return &ResultError{Status: st, Raw: fmt.Sprint(err)}
 	}
 
@@ -179,15 +130,15 @@ func DecodeResp(ms map[string]interface{}, i interface{}) error {
 	cfg := &mapstructure.DecoderConfig{
 		WeaklyTypedInput: true,
 		Metadata:         &md,
-		Result:           i,
+		Result:           rt,
 	}
 
 	decoder, err := mapstructure.NewDecoder(cfg)
 	if err != nil {
 		return errors.Wrapf(err, "mapstructure new decoder config error: [%+v]", cfg)
 	}
-	if err := decoder.Decode(ms); err != nil {
-		return errors.Wrapf(err, "mapstructure Decode error: [%+v]", ms)
+	if err := decoder.Decode(resp); err != nil {
+		return errors.Wrapf(err, "mapstructure Decode error: [%+v]", resp)
 	}
 
 	// DEBUG only
