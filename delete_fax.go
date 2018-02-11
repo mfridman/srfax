@@ -13,13 +13,6 @@ type DeleteFaxResp struct {
 	Result string `mapstructure:"Result"`
 }
 
-// DeleteFaxReq defines the POST variables for a DeleteFax request
-type DeleteFaxReq struct {
-	Action string `json:"action"`
-	Client
-	// difficult to implement because struct field names are the variables themselves
-}
-
 // DeleteFax deletes either, one ore more, received or sent faxes.
 //
 // dir is the direction of fax: "IN" or "OUT" for inbound or outbound fax
@@ -32,12 +25,12 @@ type DeleteFaxReq struct {
 // wrong name, correct id = deletion ... foobar|31524120baz will trigger a deletion
 // correct name, wrong id = nothing
 // wrong name, wrong id = nothing (just in case)
-func (c *Client) DeleteFax(ids []string, dir string) (map[string]interface{}, error) {
+func (c *Client) DeleteFax(ids []string, dir string) (*DeleteFaxResp, error) {
 	if !(dir == inbound || dir == outbound) {
 		return nil, errors.New(`dir (direction) must be one of either "IN" or "OUT"`)
 	}
 
-	msg := map[string]interface{}{
+	req := map[string]interface{}{
 		"action":     actionDeleteFax,
 		"access_id":  c.AccessID,
 		"access_pwd": c.AccessPwd,
@@ -58,11 +51,21 @@ func (c *Client) DeleteFax(ids []string, dir string) (map[string]interface{}, er
 		if strings.Contains(j, "|") {
 			// this is useless as the backend SRFax system uses ID or pipe+ID to delete
 			// foobar|31524120baz will trigger a deletion
-			msg[prefixName+strconv.Itoa(i)] = j
+			req[prefixName+strconv.Itoa(i)] = j
 		} else {
-			msg[prefixID+strconv.Itoa(i)] = j
+			req[prefixID+strconv.Itoa(i)] = j
 		}
 	}
 
-	return msg, nil
+	msg, err := sendPost(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "DeleteFaxResp SendPost error")
+	}
+
+	var resp DeleteFaxResp
+	if err := decodeResp(msg, &resp); err != nil {
+		return nil, errors.Wrap(err, "DeleteFaxResp decodeResp error")
+	}
+
+	return &resp, nil
 }

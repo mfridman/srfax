@@ -34,8 +34,8 @@ type ForwardFaxResp struct {
 	Result string `mapstructure:"Result"`
 }
 
-// ForwardFaxReq defines the POST variables for a ForwardFax request.
-type ForwardFaxReq struct {
+// forwardFaxReq defines the POST variables for a ForwardFax request.
+type forwardFaxReq struct {
 	Action string `json:"action"`
 	Client
 	ForwardFaxCfg
@@ -43,7 +43,7 @@ type ForwardFaxReq struct {
 }
 
 // ForwardFax forwards a fax to other fax numbers.
-func (c *Client) ForwardFax(cfg ForwardFaxCfg, optArgs ...ForwardFaxOpts) (*ForwardFaxReq, error) {
+func (c *Client) ForwardFax(cfg ForwardFaxCfg, optArgs ...ForwardFaxOpts) (*ForwardFaxResp, error) {
 
 	opts := ForwardFaxOpts{}
 	if len(optArgs) >= 1 {
@@ -68,12 +68,22 @@ func (c *Client) ForwardFax(cfg ForwardFaxCfg, optArgs ...ForwardFaxOpts) (*Forw
 		return nil, errors.New("must supply either FaxDetailsID or FaxFileName")
 	}
 
-	req := ForwardFaxReq{
+	req := forwardFaxReq{
 		Action:         actionForwardFax,
 		Client:         *c,
 		ForwardFaxCfg:  cfg,
 		ForwardFaxOpts: opts,
 	}
 
-	return &req, nil
+	msg, err := sendPost(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "ForwardFaxResp SendPost error")
+	}
+
+	var resp ForwardFaxResp
+	if err := decodeResp(msg, &resp); err != nil {
+		return nil, errors.Wrap(err, "ForwardFaxResp decodeResp error")
+	}
+
+	return &resp, nil
 }

@@ -33,8 +33,8 @@ func (r *RetrieveFaxResp) DecodeResult() ([]byte, error) {
 	return b, nil
 }
 
-// RetrieveFaxReq defines the POST variables for a RetrieveFax request
-type RetrieveFaxReq struct {
+// retrieveFaxReq defines the POST variables for a RetrieveFax request
+type retrieveFaxReq struct {
 	Action string `json:"action"`
 	Client
 	FaxDetailsID int    `json:"sFaxDetailsID,omitempty"` // Either the FaxFileName or the FaxDetailsID must be supplied
@@ -50,7 +50,7 @@ type RetrieveFaxReq struct {
 //
 // If operation succeeds the Result value contain a base64-encoded string.
 // The file format will be "PDF" or "TIF" – defaults to account settings if FaxFormat not supplied in optional args.
-func (c *Client) RetrieveFax(ident, dir string, optArgs ...RetrieveFaxOpts) (*RetrieveFaxReq, error) {
+func (c *Client) RetrieveFax(ident, dir string, optArgs ...RetrieveFaxOpts) (*RetrieveFaxResp, error) {
 	opts := RetrieveFaxOpts{}
 	if len(optArgs) >= 1 {
 		opts = optArgs[0]
@@ -60,7 +60,7 @@ func (c *Client) RetrieveFax(ident, dir string, optArgs ...RetrieveFaxOpts) (*Re
 		return nil, errors.Errorf("Direction must be either: %s or %s", inbound, outbound)
 	}
 
-	req := RetrieveFaxReq{
+	req := retrieveFaxReq{
 		Action:          actionRetrieveFax,
 		Client:          *c,
 		Direction:       dir,
@@ -77,5 +77,15 @@ func (c *Client) RetrieveFax(ident, dir string, optArgs ...RetrieveFaxOpts) (*Re
 		req.FaxDetailsID = n
 	}
 
-	return &req, nil
+	msg, err := sendPost(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "RetrieveFaxResp SendPost error")
+	}
+
+	var resp RetrieveFaxResp
+	if err := decodeResp(msg, &resp); err != nil {
+		return nil, errors.Wrap(err, "RetrieveFaxResp decodeResp error")
+	}
+
+	return &resp, nil
 }

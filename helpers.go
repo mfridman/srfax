@@ -23,14 +23,14 @@ type ResultError struct {
 
 func (r *ResultError) Error() string { return fmt.Sprintf("%v: %v", r.Status, r.Raw) }
 
-// SendPost is a wrapper around Post. Sends JSON encoded request to SRFax and decodes response body.
-func SendPost(req interface{}) (map[string]interface{}, error) {
+// sendPost is a wrapper around Post. Sends JSON encoded request to SRFax and decodes response body.
+func sendPost(req interface{}) (map[string]interface{}, error) {
 
 	client := http.Client{
 		Timeout: time.Duration(30 * time.Second),
 	}
 
-	by, err := json.Marshal(req)
+	by, err := json.Marshal(&req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal request")
 	}
@@ -117,9 +117,9 @@ func IDFromName(s string) (int, error) {
 	return n, nil
 }
 
-// DecodeResp decodes response map into the underlying response type (rt).
+// decodeResp decodes response map into the underlying response type (rt).
 // It is a wrapper around Mitchell's mapstructure pkg.
-func DecodeResp(resp map[string]interface{}, rt interface{}) error {
+func decodeResp(resp map[string]interface{}, rt interface{}) error {
 	if st, err := checkStatus(resp); err != nil {
 		return &ResultError{Status: st, Raw: fmt.Sprint(err)}
 	}

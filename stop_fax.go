@@ -10,8 +10,8 @@ type StopFaxResp struct {
 	Result string `mapstructure:"Result"`
 }
 
-// StopFaxReq defines the POST variables for a StopFax request
-type StopFaxReq struct {
+// stopFaxReq defines the POST variables for a StopFax request
+type stopFaxReq struct {
 	Action string `json:"action"`
 	Client
 	FaxDetailsID int `json:"sFaxDetailsID"`
@@ -19,17 +19,27 @@ type StopFaxReq struct {
 
 // StopFax deletes a specified queued fax which has not yet been processed.
 // FaxDetailsID returned from Queue_Fax
-func (c *Client) StopFax(id int) (*StopFaxReq, error) {
+func (c *Client) StopFax(id int) (*StopFaxResp, error) {
 
 	if id <= 0 {
 		return nil, errors.New("FaxDetailsID cannot be zero or negative number")
 	}
 
-	req := StopFaxReq{
+	req := stopFaxReq{
 		Action:       actionStopFax,
 		Client:       *c,
 		FaxDetailsID: id,
 	}
 
-	return &req, nil
+	msg, err := sendPost(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "StopFaxResp SendPost error")
+	}
+
+	var resp StopFaxResp
+	if err := decodeResp(msg, &resp); err != nil {
+		return nil, errors.Wrap(err, "StopFaxResp decodeResp error")
+	}
+
+	return &resp, nil
 }

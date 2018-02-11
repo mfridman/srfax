@@ -1,8 +1,6 @@
 package srfax
 
 import (
-	"strings"
-
 	"github.com/pkg/errors"
 )
 
@@ -31,24 +29,24 @@ type Client struct {
 
 // CheckAuth checks whether client is able to authenticate. A wrapper around the
 // GetFaxUsage method. Used for convenience to quickly check if access ID & PWD are valid.
-func (c *Client) CheckAuth() (bool, error) {
-	req, err := c.GetFaxUsage()
-	if err != nil {
-		return false, err
-	}
+// func (c *Client) CheckAuth() (bool, error) {
+// 	req, err := c.GetFaxUsage()
+// 	if err != nil {
+// 		return false, err
+// 	}
 
-	msg, err := SendPost(req)
-	if err != nil {
-		return false, err
-	}
+// 	msg, err := SendPost(req)
+// 	if err != nil {
+// 		return false, err
+// 	}
 
-	var resp GetFaxUsageResp
-	if err := DecodeResp(msg, &resp); err != nil {
-		return false, err
-	}
+// 	var resp GetFaxUsageResp
+// 	if err := DecodeResp(msg, &resp); err != nil {
+// 		return false, err
+// 	}
 
-	if strings.ToLower(resp.Status) != "success" {
-		return false, errors.Errorf("No Result errors but Status was not Success: [%v]", resp.Status)
-	}
-	return true, nil
-}
+// 	if strings.ToLower(resp.Status) != "success" {
+// 		return false, errors.Errorf("No Result errors but Status was not Success: [%v]", resp.Status)
+// 	}
+// 	return true, nil
+// }

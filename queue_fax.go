@@ -65,8 +65,8 @@ type QueueFaxResp struct {
 //
 // if files is an empty slice, the CoverPage opts must be enabled. Otherwise will receive
 // error: No Files to Fax /
-func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) (map[string]interface{}, error) {
-	msg := map[string]interface{}{
+func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) (*QueueFaxResp, error) {
+	req := map[string]interface{}{
 		"action":       actionQueueFax,
 		"access_id":    c.AccessID,
 		"access_pwd":   c.AccessPwd,
@@ -84,13 +84,13 @@ func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) 
 		"ResultError": "Invalid CallerID provided / "
 		"ResultError": "Forbidden: Access is denied / Invalid Authentication."
 	*/
-	if err := failIfEmpty(msg); err != nil {
+	if err := failIfEmpty(req); err != nil {
 		return nil, err
 	}
 
 	// build up optional, non-empty, options based on srfax tags through reflection.
 	// TODO this may not be the best approach. Hard to test and may be prone to error.
-	// Think about writing a function to parse optional args, build a map and merging with existing msg map.
+	// Think about writing a function to parse optional args, build a map and merging with existing req map.
 	if len(optArgs) > 0 {
 		v := reflect.ValueOf(optArgs[0])
 
@@ -104,7 +104,7 @@ func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) 
 				if !ok {
 					return nil, errors.Errorf("QueueFax: failed string reflection on optional arguments")
 				}
-				msg[s] = v.Field(i).String()
+				req[s] = v.Field(i).String()
 			case int:
 				if v.Field(i).Int() <= 0 || v.Field(i).Int() > 6 {
 					continue
@@ -113,7 +113,7 @@ func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) 
 				if !ok {
 					return nil, errors.Errorf("QueueFax: failed int reflection on optional arguments")
 				}
-				msg[s] = v.Field(i).Int()
+				req[s] = v.Field(i).Int()
 			}
 		}
 	}
@@ -129,12 +129,22 @@ func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) 
 				log.Printf("skipping empty file, check name or content: %+v\n", f)
 				continue
 			}
-			msg[prefixName+strconv.Itoa(i)] = f.Name
-			msg[prefixContent+strconv.Itoa(i)] = f.Content
+			req[prefixName+strconv.Itoa(i)] = f.Name
+			req[prefixContent+strconv.Itoa(i)] = f.Content
 		}
 	}
 
-	return msg, nil
+	msg, err := sendPost(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "QueueFaxResp SendPost error")
+	}
+
+	var resp QueueFaxResp
+	if err := decodeResp(msg, &resp); err != nil {
+		return nil, errors.Wrap(err, "QueueFaxResp decodeResp error")
+	}
+
+	return &resp, nil
 }
 
 // failIfEmpty takes a map to check if any value is empty. If a value is empty
