@@ -1,7 +1,11 @@
 package srfax
 
-// FaxInboxOpts contains optional arguments when retrieving inbox items.
-type FaxInboxOpts struct {
+import (
+	"github.com/pkg/errors"
+)
+
+// GetFaxInboxOpts contains optional arguments when retrieving inbox items.
+type GetFaxInboxOpts struct {
 	Period          string `json:"sPeriod,omitempty"`
 	StartDate       string `json:"sStartDate,omitempty"`
 	EndDate         string `json:"sEndDate,omitempty"`
@@ -9,8 +13,8 @@ type FaxInboxOpts struct {
 	IncludeSubUsers string `json:"sIncludeSubUsers,omitempty"`
 }
 
-// FaxInboxResp represents fax inbox information.
-type FaxInboxResp struct {
+// GetFaxInboxResp represents fax inbox information.
+type GetFaxInboxResp struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
 		FileName      string `mapstructure:"FileName"`
@@ -27,25 +31,35 @@ type FaxInboxResp struct {
 	} `mapstructure:"Result"`
 }
 
-// FaxInboxReq defines the POST variables for a GetFaxInbox request
-type FaxInboxReq struct {
+// getFaxInboxReq defines the POST variables for a GetFaxInbox request
+type getFaxInboxReq struct {
 	Action string `json:"action"`
 	Client
-	FaxInboxOpts
+	GetFaxInboxOpts
 }
 
 // GetFaxInbox retrieves a list of faxes received for a specified period of time.
-func (c *Client) GetFaxInbox(optArgs ...FaxInboxOpts) (*FaxInboxReq, error) {
-	opts := FaxInboxOpts{}
+func (c *Client) GetFaxInbox(optArgs ...GetFaxInboxOpts) (*GetFaxInboxResp, error) {
+	opts := GetFaxInboxOpts{}
 	if len(optArgs) >= 1 {
 		opts = optArgs[0]
 	}
 
-	req := FaxInboxReq{
-		Action:       actionGetFaxInbox,
-		Client:       *c,
-		FaxInboxOpts: opts,
+	req := getFaxInboxReq{
+		Action:          actionGetFaxInbox,
+		Client:          *c,
+		GetFaxInboxOpts: opts,
 	}
 
-	return &req, nil
+	msg, err := sendPost(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "GetFaxInbox SendPost error")
+	}
+
+	var resp GetFaxInboxResp
+	if err := decodeResp(msg, &resp); err != nil {
+		return nil, errors.Wrap(err, "GetFaxInbox decodeResp error")
+	}
+
+	return &resp, nil
 }

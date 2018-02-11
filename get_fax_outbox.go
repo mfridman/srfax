@@ -1,15 +1,17 @@
 package srfax
 
-// FaxOutboxOpts contains optional arguments when retrieving outbox items.
-type FaxOutboxOpts struct {
+import "github.com/pkg/errors"
+
+// GetFaxOutboxOpts contains optional arguments when retrieving outbox items.
+type GetFaxOutboxOpts struct {
 	Period          string `json:"sPeriod,omitempty"`
 	StartDate       string `json:"sStartDate,omitempty"`
 	EndDate         string `json:"sEndDate,omitempty"`
 	IncludeSubUsers string `json:"sIncludeSubUsers,omitempty"`
 }
 
-// FaxOutboxResp represents fax outbox information.
-type FaxOutboxResp struct {
+// GetFaxOutboxResp represents fax outbox information.
+type GetFaxOutboxResp struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
 		FileName      string `mapstructure:"FileName"`
@@ -30,25 +32,35 @@ type FaxOutboxResp struct {
 	} `mapstructure:"Result"`
 }
 
-// FaxOutboxReq defines the POST variables for a GetFaxOutbox request
-type FaxOutboxReq struct {
+// getFaxOutboxReq defines the POST variables for a GetFaxOutbox request
+type getFaxOutboxReq struct {
 	Action string `json:"action"`
 	Client
-	FaxOutboxOpts
+	GetFaxOutboxOpts
 }
 
 // GetFaxOutbox retrieves a list of faxes sent for a specified period of time.
-func (c *Client) GetFaxOutbox(optArgs ...FaxOutboxOpts) (*FaxOutboxReq, error) {
-	opts := FaxOutboxOpts{}
+func (c *Client) GetFaxOutbox(optArgs ...GetFaxOutboxOpts) (*GetFaxOutboxResp, error) {
+	opts := GetFaxOutboxOpts{}
 	if len(optArgs) >= 1 {
 		opts = optArgs[0]
 	}
 
-	req := FaxOutboxReq{
-		Action:        actionGetFaxOutbox,
-		Client:        *c,
-		FaxOutboxOpts: opts,
+	req := getFaxOutboxReq{
+		Action:           actionGetFaxOutbox,
+		Client:           *c,
+		GetFaxOutboxOpts: opts,
 	}
 
-	return &req, nil
+	msg, err := sendPost(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "GetFaxOutboxResp SendPost error")
+	}
+
+	var resp GetFaxOutboxResp
+	if err := decodeResp(msg, &resp); err != nil {
+		return nil, errors.Wrap(err, "GetFaxOutboxResp decodeResp error")
+	}
+
+	return &resp, nil
 }
