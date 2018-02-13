@@ -59,7 +59,7 @@ func (c *Client) GetFaxOutbox(optArgs ...GetFaxOutboxOpts) (*GetFaxOutboxResp, e
 
 	var resp GetFaxOutboxResp
 	if err := decodeResp(msg, &resp); err != nil {
-		return nil, errors.Wrap(err, "GetFaxOutboxResp decodeResp error")
+		return nil, err
 	}
 
 	return &resp, nil

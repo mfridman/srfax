@@ -141,7 +141,7 @@ func (c *Client) QueueFax(files []File, q QueueFaxCfg, optArgs ...QueueFaxOpts) 
 
 	var resp QueueFaxResp
 	if err := decodeResp(msg, &resp); err != nil {
-		return nil, errors.Wrap(err, "QueueFaxResp decodeResp error")
+		return nil, err
 	}
 
 	return &resp, nil

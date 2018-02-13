@@ -53,7 +53,7 @@ func (c *Client) GetMulFaxStatus(ids string) (*GetMulFaxStatusResp, error) {
 
 	var resp GetMulFaxStatusResp
 	if err := decodeResp(msg, &resp); err != nil {
-		return nil, errors.Wrap(err, "GetMulFaxStatusResp decodeResp error")
+		return nil, err
 	}
 
 	return &resp, nil

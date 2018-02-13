@@ -82,7 +82,7 @@ func (c *Client) ForwardFax(cfg ForwardFaxCfg, optArgs ...ForwardFaxOpts) (*Forw
 
 	var resp ForwardFaxResp
 	if err := decodeResp(msg, &resp); err != nil {
-		return nil, errors.Wrap(err, "ForwardFaxResp decodeResp error")
+		return nil, err
 	}
 
 	return &resp, nil

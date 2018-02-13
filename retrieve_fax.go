@@ -84,7 +84,7 @@ func (c *Client) RetrieveFax(ident, dir string, optArgs ...RetrieveFaxOpts) (*Re
 
 	var resp RetrieveFaxResp
 	if err := decodeResp(msg, &resp); err != nil {
-		return nil, errors.Wrap(err, "RetrieveFaxResp decodeResp error")
+		return nil, err
 	}
 
 	return &resp, nil

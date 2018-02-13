@@ -51,7 +51,7 @@ func (c *Client) GetFaxStatus(id int) (*GetFaxStatusResp, error) {
 
 	var resp GetFaxStatusResp
 	if err := decodeResp(msg, &resp); err != nil {
-		return nil, errors.Wrap(err, "GetFaxStatusResp decodeResp error")
+		return nil, err
 	}
 
 	return &resp, nil

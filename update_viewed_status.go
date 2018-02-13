@@ -57,7 +57,7 @@ func (c *Client) UpdateViewedStatus(cfg UpdateViewedStatusCfg) (*UpdateViewedSta
 
 	var resp UpdateViewedStatusResp
 	if err := decodeResp(msg, &resp); err != nil {
-		return nil, errors.Wrap(err, "UpdateViewedStatusResp decodeResp error")
+		return nil, err
 	}
 
 	return &resp, nil

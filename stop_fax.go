@@ -38,7 +38,7 @@ func (c *Client) StopFax(id int) (*StopFaxResp, error) {
 
 	var resp StopFaxResp
 	if err := decodeResp(msg, &resp); err != nil {
-		return nil, errors.Wrap(err, "StopFaxResp decodeResp error")
+		return nil, err
 	}
 
 	return &resp, nil

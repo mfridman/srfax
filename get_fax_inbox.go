@@ -58,7 +58,7 @@ func (c *Client) GetFaxInbox(optArgs ...GetFaxInboxOpts) (*GetFaxInboxResp, erro
 
 	var resp GetFaxInboxResp
 	if err := decodeResp(msg, &resp); err != nil {
-		return nil, errors.Wrap(err, "GetFaxInbox decodeResp error")
+		return nil, err
 	}
 
 	return &resp, nil

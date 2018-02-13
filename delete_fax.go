@@ -64,7 +64,7 @@ func (c *Client) DeleteFax(ids []string, dir string) (*DeleteFaxResp, error) {
 
 	var resp DeleteFaxResp
 	if err := decodeResp(msg, &resp); err != nil {
-		return nil, errors.Wrap(err, "DeleteFaxResp decodeResp error")
+		return nil, err
 	}
 
 	return &resp, nil

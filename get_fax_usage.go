@@ -51,7 +51,7 @@ func (c *Client) GetFaxUsage(optArgs ...GetFaxUsageOpts) (*GetFaxUsageResp, erro
 
 	var resp GetFaxUsageResp
 	if err := decodeResp(msg, &resp); err != nil {
-		return nil, errors.Wrap(err, "GetFaxUsageResp decodeResp error")
+		return nil, err
 	}
 
 	return &resp, nil
