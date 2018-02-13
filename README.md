@@ -54,9 +54,22 @@ if err != nil {
 }
 ```
 
-With a `*Client` one runs all the supported SRFax operations. For each method this client will construct a request, send it via POST and decode the response into the corresponding type.
+There is a convenience method to check authentication:
 
-Examples for all methods can be found in the [wiki (wip)](https://github.com/mfridman/srfax/wiki). The following is a quick example
+```go
+ok, err := client.CheckAuth()
+if err != nil {
+    log.SetFlags(0)
+    log.Fatalln(err) // Failed: Invalid Access Code / Password
+}
+fmt.Println(ok) // true
+```
+
+With a `*Client` one runs all the supported SRFax operations. For each method this client will construct a request, send it via POST and decode the response into a corresponding type.
+
+Some methods require many arguments so they'll typically be wrapped in a struct with a Cfg suffix. Likewise some accept optional arguments and will be wrapped in a struct with an Opts suffix.
+
+Examples for all methods will be found in the [wiki](https://github.com/mfridman/srfax/wiki). The following is a quick example to get you started:
 
 #### Example:
 
