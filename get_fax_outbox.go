@@ -2,16 +2,40 @@ package srfax
 
 import "github.com/pkg/errors"
 
-// GetFaxOutboxOpts contains optional arguments when retrieving outbox items.
-type GetFaxOutboxOpts struct {
+// OutboxOptions contains optional arguments when retrieving outbox items.
+type OutboxOptions struct {
 	Period          string `json:"sPeriod,omitempty"`
 	StartDate       string `json:"sStartDate,omitempty"`
 	EndDate         string `json:"sEndDate,omitempty"`
 	IncludeSubUsers string `json:"sIncludeSubUsers,omitempty"`
 }
 
-// GetFaxOutboxResp represents fax outbox information.
-type GetFaxOutboxResp struct {
+func (o *OutboxOptions) validate() error {
+	if o.Period != "" {
+		switch o.Period {
+		case "RANGE":
+			if ok := validDates("20060102", o.StartDate, o.EndDate); !ok {
+				return errors.New("when Period set to RANGE must supply StartDate and EndDate; format must be YYYYMMDD")
+			}
+		case "ALL":
+			if o.StartDate != "" || o.EndDate != "" {
+				return errors.New("StartDate or EndDate only required when Period set to RANGE")
+			}
+		default:
+			return errors.New("Period must be ALL|RANGE")
+		}
+
+	}
+
+	if o.IncludeSubUsers != "" && o.IncludeSubUsers != "Y" {
+		return errors.New(`IncludeSubUsers must be blank or set to "Y"`)
+	}
+
+	return nil
+}
+
+// Outbox represents fax outbox information.
+type Outbox struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
 		FileName      string `mapstructure:"FileName"`
@@ -36,28 +60,31 @@ type GetFaxOutboxResp struct {
 type getFaxOutboxReq struct {
 	Action string `json:"action"`
 	Client
-	GetFaxOutboxOpts
+	OutboxOptions
 }
 
 // GetFaxOutbox retrieves a list of faxes sent for a specified period of time.
-func (c *Client) GetFaxOutbox(options ...GetFaxOutboxOpts) (*GetFaxOutboxResp, error) {
-	opts := GetFaxOutboxOpts{}
+func (c *Client) GetFaxOutbox(options ...OutboxOptions) (*Outbox, error) {
+	opts := OutboxOptions{}
 	if len(options) >= 1 {
 		opts = options[0]
+		if err := opts.validate(); err != nil {
+			return nil, err
+		}
 	}
 
 	req := getFaxOutboxReq{
-		Action:           actionGetFaxOutbox,
-		Client:           *c,
-		GetFaxOutboxOpts: opts,
+		Action:        actionGetFaxOutbox,
+		Client:        *c,
+		OutboxOptions: opts,
 	}
 
 	msg, err := sendPost(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "GetFaxOutboxResp SendPost error")
+		return nil, errors.Wrap(err, "Outbox SendPost error")
 	}
 
-	var resp GetFaxOutboxResp
+	var resp Outbox
 	if err := decodeResp(msg, &resp); err != nil {
 		return nil, err
 	}
