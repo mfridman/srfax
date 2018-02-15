@@ -63,8 +63,8 @@ func validDates(layout string, values ...string) bool {
 	return true
 }
 
-// GetFaxInboxResp represents fax inbox information.
-type GetFaxInboxResp struct {
+// Inbox represents fax inbox information.
+type Inbox struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
 		FileName      string `mapstructure:"FileName"`
@@ -73,23 +73,23 @@ type GetFaxInboxResp struct {
 		CallerID      string `mapstructure:"CallerID"`
 		RemoteID      string `mapstructure:"RemoteID"`
 		ViewedStatus  string `mapstructure:"ViewedStatus"`
-		UserID        string `mapstructure:"User_ID" json:",omitempty"`        // only if sIncludeSubUsers is set to “Y”
-		UserFaxNumber string `mapstructure:"User_FaxNumber" json:",omitempty"` // only if sIncludeSubUsers is set to “Y”
+		UserID        string `mapstructure:"User_ID" json:",omitempty"`
+		UserFaxNumber string `mapstructure:"User_FaxNumber" json:",omitempty"`
 		EpochTime     int    `mapstructure:"EpochTime"`
 		Pages         int    `mapstructure:"Pages"`
 		Size          int    `mapstructure:"Size"`
 	} `mapstructure:"Result"`
 }
 
-// getFaxInboxReq defines the POST variables for a GetFaxInbox request
-type getFaxInboxReq struct {
+// inboxRequest defines the POST variables for a GetFaxInbox request
+type inboxRequest struct {
 	Action string `json:"action"`
 	Client
 	InboxOptions
 }
 
 // GetFaxInbox retrieves a list of faxes received for a specified period of time.
-func (c *Client) GetFaxInbox(options ...InboxOptions) (*GetFaxInboxResp, error) {
+func (c *Client) GetFaxInbox(options ...InboxOptions) (*Inbox, error) {
 	opts := InboxOptions{}
 	if len(options) >= 1 {
 		opts = options[0]
@@ -98,7 +98,7 @@ func (c *Client) GetFaxInbox(options ...InboxOptions) (*GetFaxInboxResp, error) 
 		}
 	}
 
-	req := getFaxInboxReq{
+	req := inboxRequest{
 		Action:       actionGetFaxInbox,
 		Client:       *c,
 		InboxOptions: opts,
@@ -109,7 +109,7 @@ func (c *Client) GetFaxInbox(options ...InboxOptions) (*GetFaxInboxResp, error) 
 		return nil, errors.Wrap(err, "GetFaxInbox SendPost error")
 	}
 
-	var resp GetFaxInboxResp
+	var resp Inbox
 	if err := decodeResp(msg, &resp); err != nil {
 		return nil, err
 	}
