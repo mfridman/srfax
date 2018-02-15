@@ -39,10 +39,12 @@ type getFaxInboxReq struct {
 }
 
 // GetFaxInbox retrieves a list of faxes received for a specified period of time.
-func (c *Client) GetFaxInbox(optArgs ...GetFaxInboxOpts) (*GetFaxInboxResp, error) {
+func (c *Client) GetFaxInbox(options ...GetFaxInboxOpts) (*GetFaxInboxResp, error) {
 	opts := GetFaxInboxOpts{}
 	if len(optArgs) >= 1 {
 		opts = optArgs[0]
+	if len(options) >= 1 {
+		opts = options[0]
 	}
 
 	req := getFaxInboxReq{

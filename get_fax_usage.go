@@ -32,10 +32,10 @@ type getFaxUsageReq struct {
 }
 
 // GetFaxUsage reports usage for a specified user and period.
-func (c *Client) GetFaxUsage(optArgs ...GetFaxUsageOpts) (*GetFaxUsageResp, error) {
+func (c *Client) GetFaxUsage(options ...GetFaxUsageOpts) (*GetFaxUsageResp, error) {
 	opts := GetFaxUsageOpts{}
-	if len(optArgs) >= 1 {
-		opts = optArgs[0]
+	if len(options) >= 1 {
+		opts = options[0]
 	}
 
 	req := getFaxUsageReq{

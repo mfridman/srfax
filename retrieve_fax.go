@@ -50,10 +50,10 @@ type retrieveFaxReq struct {
 //
 // If operation succeeds the Result value contain a base64-encoded string.
 // The file format will be "PDF" or "TIF" – defaults to account settings if FaxFormat not supplied in optional args.
-func (c *Client) RetrieveFax(ident, dir string, optArgs ...RetrieveFaxOpts) (*RetrieveFaxResp, error) {
+func (c *Client) RetrieveFax(ident, dir string, options ...RetrieveFaxOpts) (*RetrieveFaxResp, error) {
 	opts := RetrieveFaxOpts{}
-	if len(optArgs) >= 1 {
-		opts = optArgs[0]
+	if len(options) >= 1 {
+		opts = options[0]
 	}
 
 	if !(dir == inbound || dir == outbound) {

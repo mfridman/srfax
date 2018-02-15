@@ -43,11 +43,11 @@ type forwardFaxReq struct {
 }
 
 // ForwardFax forwards a fax to other fax numbers.
-func (c *Client) ForwardFax(cfg ForwardFaxCfg, optArgs ...ForwardFaxOpts) (*ForwardFaxResp, error) {
+func (c *Client) ForwardFax(cfg ForwardFaxCfg, options ...ForwardFaxOpts) (*ForwardFaxResp, error) {
 
 	opts := ForwardFaxOpts{}
-	if len(optArgs) >= 1 {
-		opts = optArgs[0]
+	if len(options) >= 1 {
+		opts = options[0]
 	}
 
 	if !(cfg.Direction == inbound || cfg.Direction == outbound) {
