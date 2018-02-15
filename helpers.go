@@ -144,3 +144,15 @@ func decodeResp(resp map[string]interface{}, rt interface{}) error {
 
 	return nil
 }
+
+// used to validate start and end dates when used in conjunction with RANGE.
+// date format must be "YYYYMMDD"
+func validDates(layout string, values ...string) bool {
+	for _, val := range values {
+		if _, err := time.Parse(layout, val); err != nil {
+			return false
+		}
+	}
+
+	return true
+}

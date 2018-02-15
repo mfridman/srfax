@@ -1,8 +1,6 @@
 package srfax
 
 import (
-	"time"
-
 	"github.com/pkg/errors"
 )
 
@@ -51,16 +49,6 @@ func (o *InboxOptions) validate() error {
 	}
 
 	return nil
-}
-
-func validDates(layout string, values ...string) bool {
-	for _, val := range values {
-		if _, err := time.Parse(layout, val); err != nil {
-			return false
-		}
-	}
-
-	return true
 }
 
 // Inbox represents fax inbox information.
