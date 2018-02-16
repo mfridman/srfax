@@ -7,25 +7,16 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DeleteFaxResp is the response from a DeleteFax operation.
-type DeleteFaxResp struct {
+// DeleteResp is the response from a DeleteFax operation.
+type DeleteResp struct {
 	Status string `mapstructure:"Status"`
 	Result string `mapstructure:"Result"`
 }
 
-// DeleteFax deletes either, one ore more, received or sent faxes.
+// DeleteFax deletes one or more received or sent faxes.
 //
 // dir is the direction of fax: "IN" or "OUT" for inbound or outbound fax
-//
-// TODO (MF): Status always seems to be "Success", even after item(s) deleted. Even if ID is a
-// fake, still "Success"
-// Also, passing in an incorrect "Name" with a valid ID will delete item.
-// backend SRFax system uses ID or pipe+ID to delete
-// OUT || IN:
-// wrong name, correct id = deletion ... foobar|31524120baz will trigger a deletion
-// correct name, wrong id = nothing
-// wrong name, wrong id = nothing (just in case)
-func (c *Client) DeleteFax(ids []string, dir string) (*DeleteFaxResp, error) {
+func (c *Client) DeleteFax(ids []string, dir string) (*DeleteResp, error) {
 	if !(dir == inbound || dir == outbound) {
 		return nil, errors.New(`dir (direction) must be one of either "IN" or "OUT"`)
 	}
@@ -46,11 +37,8 @@ func (c *Client) DeleteFax(ids []string, dir string) (*DeleteFaxResp, error) {
 		return nil, errors.New("must supply one or more identifiers when deleting faxes. Accepts multiple fax file names or multiple IDs")
 	}
 
-	// no strict checking because SRFax API will only delete valid IDs
 	for i, j := range ids {
 		if strings.Contains(j, "|") {
-			// this is useless as the backend SRFax system uses ID or pipe+ID to delete
-			// foobar|31524120baz will trigger a deletion
 			req[prefixName+strconv.Itoa(i)] = j
 		} else {
 			req[prefixID+strconv.Itoa(i)] = j
@@ -59,10 +47,10 @@ func (c *Client) DeleteFax(ids []string, dir string) (*DeleteFaxResp, error) {
 
 	msg, err := sendPost(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "DeleteFaxResp SendPost error")
+		return nil, errors.Wrap(err, "DeleteResp SendPost error")
 	}
 
-	var resp DeleteFaxResp
+	var resp DeleteResp
 	if err := decodeResp(msg, &resp); err != nil {
 		return nil, err
 	}
