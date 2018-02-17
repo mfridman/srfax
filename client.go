@@ -78,7 +78,7 @@ func (c *Client) PagesThisMonth(day int) (*Usage, error) {
 		start = end.AddDate(0, -1, 0) // go back one month from end date
 	}
 
-	opts := GetFaxUsageOpts{
+	opts := FaxUsageOptions{
 		IncludeSubUsers: "Y",
 		Period:          "RANGE",
 		StartDate:       start.Format(layout),

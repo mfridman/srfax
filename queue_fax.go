@@ -1,7 +1,6 @@
 package srfax
 
 import (
-	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -9,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// QueueFaxOpts contains optional arguments when sending faxes.
+// QueueOptions contains optional arguments when sending faxes.
 //
 // If the default cover page on the account is set to "Attachments ONLY" the cover page will
 // not be created irrespective of this variable
@@ -18,10 +17,11 @@ import (
 // "Basic", "Standard", "Company", or "Personal"
 //
 // srfax is a custom tag used for reflection (specific to this struct).
-type QueueFaxOpts struct {
+type QueueOptions struct {
 	Retries       int    `srfax:"sRetries"`
 	AccountCode   string `srfax:"sAccountCode"`
 	FaxFromHeader string `srfax:"sFaxFromHeader"`
+
 	// cover page
 	CoverPage      string `srfax:"sCoverPage"`
 	CPFromName     string `srfax:"sCPFromName"`
@@ -30,16 +30,19 @@ type QueueFaxOpts struct {
 	CPSubject      string `srfax:"sCPSubject"`
 	CPComments     string `srfax:"sCPComments"`
 
-	NotifyURL    string `srfax:"sNotifyURL"`
-	QueueFaxDate string `srfax:"sQueueFaxDate"` // YYYY-MM-DD
-	QueueFaxTime string `srfax:"sQueueFaxTime"` // HH:MM, using 24 hour time
+	NotifyURL string `srfax:"sNotifyURL"`
+
+	// YYYY-MM-DD
+	QueueFaxDate string `srfax:"sQueueFaxDate"`
+	// HH:MM, using 24 hour time
+	QueueFaxTime string `srfax:"sQueueFaxTime"`
 }
 
-// QueueFaxCfg contains mandatory arguments when sending faxes.
+// QueueCfg contains mandatory arguments when sending faxes.
 //
 // If sending to a single number use SINGLE and pass in a slice of len 1.
 // Otherwise use BROADCAST and pass in a slice of numbers (as string)
-type QueueFaxCfg struct {
+type QueueCfg struct {
 	CallerID    int      // sender's fax number (must be 10 digits)
 	SenderEmail string   // sender's email address
 	FaxType     string   // "SINGLE" or "BROADCAST"
@@ -48,12 +51,16 @@ type QueueFaxCfg struct {
 
 // File represents a queueable fax item.
 // It is the callers responsibility to ensure that Content is base64-encoded.
-// TODO think about adding a convenience function that specifies an "outbox", i.e., a directory,
-// and generates all files in that directory as a []File, which can be passed directly to QueueFax
 type File struct {
-	Name    string // filename
-	Content string // base64-encoded string
+	// filename
+	Name string
+
+	// base64-encoded string
+	Content string
 }
+
+// Files is a slice of quequeable File items.
+type Files []File
 
 // QueueFaxResp represents information about faxes added to the queue.
 type QueueFaxResp struct {
@@ -61,19 +68,18 @@ type QueueFaxResp struct {
 	Result string `mapstructure:"Result"`
 }
 
-// QueueFax adds faxes to the queue of items to send.
+// QueueFax adds fax item(s) to a queue for delivery.
 //
-// if files is an empty slice, the CoverPage opts must be enabled. Otherwise will receive
-// error: No Files to Fax /
-func (c *Client) QueueFax(files []File, q QueueFaxCfg, options ...QueueFaxOpts) (*QueueFaxResp, error) {
+// If Files is nil, the CoverPage option must be enabled. Otherwise will receive error: No Files to Fax
+func (c *Client) QueueFax(files Files, cgf QueueCfg, options ...QueueOptions) (*QueueFaxResp, error) {
 	req := map[string]interface{}{
 		"action":       actionQueueFax,
 		"access_id":    c.AccessID,
 		"access_pwd":   c.AccessPwd,
-		"sCallerID":    q.CallerID,
-		"sSenderEmail": q.SenderEmail,
-		"sFaxType":     q.FaxType,
-		"sToFaxNumber": strings.Join(q.ToFaxNumber, "|"),
+		"sCallerID":    cgf.CallerID,
+		"sSenderEmail": cgf.SenderEmail,
+		"sFaxType":     cgf.FaxType,
+		"sToFaxNumber": strings.Join(cgf.ToFaxNumber, "|"),
 	}
 
 	// fail early if any of the above mandatory values are empty
@@ -90,7 +96,7 @@ func (c *Client) QueueFax(files []File, q QueueFaxCfg, options ...QueueFaxOpts) 
 
 	// build up optional, non-empty, options based on srfax tags through reflection.
 	// TODO this may not be the best approach. Hard to test and may be prone to error.
-	// Think about writing a function to parse optional args, build a map and merging with existing req map.
+	// Think about writing a function to parse optional args, build a map and merge with existing request map.
 	if len(options) > 0 {
 		v := reflect.ValueOf(options[0])
 
@@ -122,25 +128,26 @@ func (c *Client) QueueFax(files []File, q QueueFaxCfg, options ...QueueFaxOpts) 
 		prefixName    = "sFileName_"
 		prefixContent = "sFileContent_"
 	)
-	// No need to fail if len == 0, because SRFax can queue cover page only.
+
+	emptyFiles := make([]File, 0)
+	// Don't fail if len == 0, because SRFax can queue a cover page only,
+	// this is why this method accepts nil as an argument to Files.
 	if len(files) > 0 {
 		for i, f := range files {
 			if f.Name == "" || f.Content == "" {
-				log.Printf("skipping empty file, check name or content: %+v\n", f)
-				continue
+				emptyFiles = append(emptyFiles, f)
 			}
 			req[prefixName+strconv.Itoa(i)] = f.Name
 			req[prefixContent+strconv.Itoa(i)] = f.Content
 		}
-	}
 
-	msg, err := sendPost(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "QueueFaxResp SendPost error")
+		if len(emptyFiles) > 0 {
+			return nil, errors.Errorf("skipping empty file(s), check name or content: %+v", emptyFiles)
+		}
 	}
 
 	var resp QueueFaxResp
-	if err := decodeResp(msg, &resp); err != nil {
+	if err := run(req, &resp); err != nil {
 		return nil, err
 	}
 
@@ -160,7 +167,7 @@ func failIfEmpty(m map[string]interface{}) error {
 		}
 	}
 	if len(em) != 0 {
-		return errors.Errorf("check QueueFaxCfg, the following cannot be empty: %s", strings.Join(em, ","))
+		return errors.Errorf("check QueueCfg, the following fields cannot be empty: %s", strings.Join(em, ", "))
 	}
 
 	return nil

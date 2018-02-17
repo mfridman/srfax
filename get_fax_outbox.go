@@ -14,7 +14,7 @@ func (o *OutboxOptions) validate() error {
 	if o.Period != "" {
 		switch o.Period {
 		case "RANGE":
-			if ok := validDates("20060102", o.StartDate, o.EndDate); !ok {
+			if ok := validDateOrTime("20060102", o.StartDate, o.EndDate); !ok {
 				return errors.New("when Period set to RANGE must supply StartDate and EndDate; format must be YYYYMMDD")
 			}
 		case "ALL":
@@ -56,8 +56,8 @@ type Outbox struct {
 	} `mapstructure:"Result"`
 }
 
-// getFaxOutboxReq defines the POST variables for a GetFaxOutbox request
-type getFaxOutboxReq struct {
+// outboxRequest defines the POST variables for a GetFaxOutbox request
+type outboxRequest struct {
 	Action string `json:"action"`
 	Client
 	OutboxOptions
@@ -73,19 +73,14 @@ func (c *Client) GetFaxOutbox(options ...OutboxOptions) (*Outbox, error) {
 		}
 	}
 
-	req := getFaxOutboxReq{
+	req := outboxRequest{
 		Action:        actionGetFaxOutbox,
 		Client:        *c,
 		OutboxOptions: opts,
 	}
 
-	msg, err := sendPost(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "Outbox SendPost error")
-	}
-
 	var resp Outbox
-	if err := decodeResp(msg, &resp); err != nil {
+	if err := run(req, &resp); err != nil {
 		return nil, err
 	}
 

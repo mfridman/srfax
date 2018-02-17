@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -145,9 +146,8 @@ func decodeResp(resp map[string]interface{}, rt interface{}) error {
 	return nil
 }
 
-// used to validate start and end dates when used in conjunction with RANGE.
-// date format must be "YYYYMMDD"
-func validDates(layout string, values ...string) bool {
+// used to validate dates and times, caller must supply format layout.
+func validDateOrTime(layout string, values ...string) bool {
 	for _, val := range values {
 		if _, err := time.Parse(layout, val); err != nil {
 			return false
@@ -155,4 +155,56 @@ func validDates(layout string, values ...string) bool {
 	}
 
 	return true
+}
+
+// Check a struct to make sure fields are not set to their zero value.
+// Supports string and int checking on non-embedded struct. Will skip fields with omitempty tag.
+func hasEmpty(i interface{}) error {
+
+	val := reflect.ValueOf(i)
+
+	n := val.NumField()
+
+	var empty []string
+
+	for i := 0; i < n; i++ {
+		switch val.Field(i).Kind() {
+		case reflect.String:
+			tags := val.Type().Field(i).Tag.Get("json")
+			if !strings.Contains(tags, "omitempty") && val.Field(i).String() == "" {
+				empty = append(empty, val.Type().Field(i).Name)
+			}
+		case reflect.Int:
+			tags := val.Type().Field(i).Tag.Get("json")
+			if !strings.Contains(tags, "omitempty") && val.Field(i).Int() == 0 {
+				empty = append(empty, val.Type().Field(i).Name)
+			}
+		}
+	}
+	if len(empty) > 0 {
+		s := fmt.Sprintf("the following fields cannot be empty: %v", strings.Join(empty, ", "))
+		return errors.New(s)
+	}
+
+	return nil
+}
+
+func isNChars(s string, length int) bool {
+	if len(s) != length {
+		return false
+	}
+	return true
+}
+
+func run(req, resp interface{}) error {
+	msg, err := sendPost(req)
+	if err != nil {
+		return errors.Wrap(err, "SendPost error")
+	}
+
+	if err := decodeResp(msg, resp); err != nil {
+		return err
+	}
+
+	return nil
 }

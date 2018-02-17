@@ -45,13 +45,8 @@ func (c *Client) DeleteFax(ids []string, dir string) (*DeleteResp, error) {
 		}
 	}
 
-	msg, err := sendPost(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "DeleteResp SendPost error")
-	}
-
 	var resp DeleteResp
-	if err := decodeResp(msg, &resp); err != nil {
+	if err := run(req, &resp); err != nil {
 		return nil, err
 	}
 

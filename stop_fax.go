@@ -31,13 +31,8 @@ func (c *Client) StopFax(id int) (*StopFaxResp, error) {
 		FaxDetailsID: id,
 	}
 
-	msg, err := sendPost(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "StopFaxResp SendPost error")
-	}
-
 	var resp StopFaxResp
-	if err := decodeResp(msg, &resp); err != nil {
+	if err := run(req, &resp); err != nil {
 		return nil, err
 	}
 

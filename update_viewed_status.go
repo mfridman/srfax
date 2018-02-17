@@ -4,59 +4,65 @@ import (
 	"github.com/pkg/errors"
 )
 
-// UpdateViewedStatusResp is the response from a UpdateViewedStatus operation.
-type UpdateViewedStatusResp struct {
+// ViewedStatus is the response from a UpdateViewedStatus operation.
+type ViewedStatus struct {
 	Status string `mapstructure:"Status"`
 	Result string `mapstructure:"Result"`
 }
 
-// UpdateViewedStatusCfg contains mandatory arguments when updating the Viewed status of a fax.
-type UpdateViewedStatusCfg struct {
-	FaxDetailsID int    `json:"sFaxDetailsID,omitempty"` // Either the FaxFileName or the FaxDetailsID must be supplied
-	FaxFileName  string `json:"sFaxFileName,omitempty"`  // Either the FaxFileName or the FaxDetailsID must be supplied
-	Direction    string `json:"sDirection"`              // "IN" or "OUT" for inbound or outbound fax
-	MarkAsViewed string `json:"sMarkasViewed"`           // "Y" marks fax READ, "N" marks fax UNREAD
+// ViewedStatusCfg contains mandatory arguments when updating the Viewed status of a fax.
+type ViewedStatusCfg struct {
+	// Either the FaxFileName or the FaxDetailsID must be supplied
+	//
+	// When passing FaxFileName, the entire name (including pipe and ID) must be supplied.
+	// E.g., 20170101230101-1212-21_7|12124720
+	FaxDetailsID int    `json:"sFaxDetailsID,omitempty"`
+	FaxFileName  string `json:"sFaxFileName,omitempty"`
+
+	// "IN" or "OUT" for inbound or outbound fax
+	Direction string `json:"sDirection"`
+
+	// "Y" marks fax READ, "N" marks fax UNREAD
+	MarkAsViewed string `json:"sMarkasViewed"`
 }
 
-// updatedViewedStatusReq defines the POST variables for a UpdateViewedStatus request
-type updatedViewedStatusReq struct {
+func (c *ViewedStatusCfg) validate() error {
+	if c.FaxDetailsID > 0 && c.FaxFileName != "" {
+		return errors.New("Either FaxFileName or FaxDetailsID must be supplied, not both")
+	}
+
+	if !(c.Direction == inbound || c.Direction == outbound) {
+		return errors.Errorf("Direction must be either: %s or %s", inbound, outbound)
+	}
+
+	if !(c.MarkAsViewed == yes || c.MarkAsViewed == no) {
+		return errors.Errorf("MarkAsViewed must be either: %s or %s", yes, no)
+	}
+	return nil
+}
+
+// viewedStatusRequest defines the POST variables for a UpdateViewedStatus request
+type viewedStatusRequest struct {
 	Action string `json:"action"`
 	Client
-	UpdateViewedStatusCfg
+	ViewedStatusCfg
 }
 
 // UpdateViewedStatus marks an inbound or outbound fax as read or unread.
-//
-// A note about ident:
-// when passing FaxFileName, the entire name (including pipe and ID) must be supplied.
-// E.g., 20170101230101-8812-34_0|29124120
-func (c *Client) UpdateViewedStatus(cfg UpdateViewedStatusCfg) (*UpdateViewedStatusResp, error) {
+func (c *Client) UpdateViewedStatus(cfg ViewedStatusCfg) (*ViewedStatus, error) {
 
-	if cfg.FaxDetailsID > 0 && cfg.FaxFileName != "" {
-		return nil, errors.New("Either FaxFileName or FaxDetailsID must be supplied, not both")
+	if err := cfg.validate(); err != nil {
+		return nil, err
 	}
 
-	if !(cfg.Direction == inbound || cfg.Direction == outbound) {
-		return nil, errors.Errorf("Direction must be either: %s or %s", inbound, outbound)
+	req := viewedStatusRequest{
+		Action:          actionUpdateViewedStatus,
+		Client:          *c,
+		ViewedStatusCfg: cfg,
 	}
 
-	if !(cfg.MarkAsViewed == yes || cfg.MarkAsViewed == no) {
-		return nil, errors.Errorf("MarkAsViewed must be either: %s or %s", yes, no)
-	}
-
-	req := updatedViewedStatusReq{
-		Action:                actionUpdateViewedStatus,
-		Client:                *c,
-		UpdateViewedStatusCfg: cfg,
-	}
-
-	msg, err := sendPost(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "UpdateViewedStatusResp SendPost error")
-	}
-
-	var resp UpdateViewedStatusResp
-	if err := decodeResp(msg, &resp); err != nil {
+	var resp ViewedStatus
+	if err := run(req, &resp); err != nil {
 		return nil, err
 	}
 

@@ -2,16 +2,40 @@ package srfax
 
 import "github.com/pkg/errors"
 
-// GetFaxUsageOpts contains optional arguments to modify fax usage report.
-type GetFaxUsageOpts struct {
+// FaxUsageOptions contains optional arguments to modify fax usage report.
+type FaxUsageOptions struct {
 	Period          string `json:"sPeriod,omitempty"`
 	StartDate       string `json:"sStartDate,omitempty"`
 	EndDate         string `json:"sEndDate,omitempty"`
 	IncludeSubUsers string `json:"sIncludeSubUsers,omitempty"`
 }
 
-// GetFaxUsageResp is the response from a GetFaxUsage operation.
-type GetFaxUsageResp struct {
+func (o *FaxUsageOptions) validate() error {
+	if o.Period != "" {
+		switch o.Period {
+		case "RANGE":
+			if ok := validDateOrTime("20060102", o.StartDate, o.EndDate); !ok {
+				return errors.New("when Period set to RANGE must supply StartDate and EndDate; format must be YYYYMMDD")
+			}
+		case "ALL":
+			if o.StartDate != "" || o.EndDate != "" {
+				return errors.New("StartDate or EndDate only required when Period set to RANGE")
+			}
+		default:
+			return errors.New("Period must be ALL|RANGE")
+		}
+
+	}
+
+	if o.IncludeSubUsers != "" && o.IncludeSubUsers != "Y" {
+		return errors.New(`IncludeSubUsers must be blank or set to "Y"`)
+	}
+
+	return nil
+}
+
+// FaxUsage is the response from a GetFaxUsage operation.
+type FaxUsage struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
 		Period        string `mapstructure:"Period"`
@@ -24,33 +48,31 @@ type GetFaxUsageResp struct {
 	} `mapstructure:"Result"`
 }
 
-// getFaxUsageReq defines the POST variables for a GetFaxUsage request
-type getFaxUsageReq struct {
+// faxUsageRequest defines the POST variables for a GetFaxUsage request
+type faxUsageRequest struct {
 	Action string `json:"action"`
 	Client
-	GetFaxUsageOpts
+	FaxUsageOptions
 }
 
 // GetFaxUsage reports usage for a specified user and period.
-func (c *Client) GetFaxUsage(options ...GetFaxUsageOpts) (*GetFaxUsageResp, error) {
-	opts := GetFaxUsageOpts{}
+func (c *Client) GetFaxUsage(options ...FaxUsageOptions) (*FaxUsage, error) {
+	opts := FaxUsageOptions{}
 	if len(options) >= 1 {
 		opts = options[0]
+		if err := opts.validate(); err != nil {
+			return nil, err
+		}
 	}
 
-	req := getFaxUsageReq{
+	req := faxUsageRequest{
 		Action:          actionGetFaxUsage,
 		Client:          *c,
-		GetFaxUsageOpts: opts,
+		FaxUsageOptions: opts,
 	}
 
-	msg, err := sendPost(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "GetFaxUsageResp SendPost error")
-	}
-
-	var resp GetFaxUsageResp
-	if err := decodeResp(msg, &resp); err != nil {
+	var resp FaxUsage
+	if err := run(req, &resp); err != nil {
 		return nil, err
 	}
 

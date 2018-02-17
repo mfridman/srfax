@@ -18,7 +18,7 @@ func (o *InboxOptions) validate() error {
 	if o.Period != "" {
 		switch o.Period {
 		case "RANGE":
-			if ok := validDates("20060102", o.StartDate, o.EndDate); !ok {
+			if ok := validDateOrTime("20060102", o.StartDate, o.EndDate); !ok {
 				return errors.New("when Period set to RANGE must supply StartDate and EndDate; format must be YYYYMMDD")
 			}
 		case "ALL":
@@ -92,13 +92,8 @@ func (c *Client) GetFaxInbox(options ...InboxOptions) (*Inbox, error) {
 		InboxOptions: opts,
 	}
 
-	msg, err := sendPost(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "GetFaxInbox SendPost error")
-	}
-
 	var resp Inbox
-	if err := decodeResp(msg, &resp); err != nil {
+	if err := run(req, &resp); err != nil {
 		return nil, err
 	}
 
