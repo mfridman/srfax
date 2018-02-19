@@ -9,17 +9,20 @@ import (
 
 // ClientCfg specifies parameters required for establishing an SRFax client.
 type ClientCfg struct {
-	ID  int    // access_id
-	Pwd string // access_pwd
+	// access_id
+	ID int
+
+	// access_pwd
+	Pwd string
 }
 
-// NewClient returns an SRFax client based on configuration.
+// NewClient returns an SRFax client based on supplied configuration.
 func NewClient(c ClientCfg) (*Client, error) {
 	if c.ID <= 0 {
-		return nil, errors.New("access id (access id) must be a positive number")
+		return nil, errors.New("access id (ID) must be a positive number")
 	}
 	if c.Pwd == "" {
-		return nil, errors.New("access password cannot be blank")
+		return nil, errors.New("password (Pwd) cannot be blank")
 	}
 
 	return &Client{AccessID: c.ID, AccessPwd: c.Pwd}, nil
@@ -56,9 +59,6 @@ func (u *Usage) String() string {
 
 // PagesThisMonth reports pages used by ALL users of the account in the current month based on reset day.
 // Each account will have a unique reset day.
-// BUG(mf): This may be an issue with the SRFax API, need to contact support.
-// "sIncludeSubUsers": "Y" doesn't return sub user accounts making the page count lower. This should
-// reflect the Group Fax Usage in the Account Summary GUI.
 func (c *Client) PagesThisMonth(day int) (*Usage, error) {
 
 	var start, end time.Time
