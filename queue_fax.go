@@ -71,15 +71,15 @@ type QueueFaxResp struct {
 // QueueFax adds fax item(s) to a queue for delivery.
 //
 // If Files is nil, the CoverPage option must be enabled. Otherwise will receive error: No Files to Fax
-func (c *Client) QueueFax(files Files, cgf QueueCfg, options ...QueueOptions) (*QueueFaxResp, error) {
+func (c *Client) QueueFax(files Files, cfg QueueCfg, options ...QueueOptions) (*QueueFaxResp, error) {
 	req := map[string]interface{}{
 		"action":       actionQueueFax,
 		"access_id":    c.AccessID,
 		"access_pwd":   c.AccessPwd,
-		"sCallerID":    cgf.CallerID,
-		"sSenderEmail": cgf.SenderEmail,
-		"sFaxType":     cgf.FaxType,
-		"sToFaxNumber": strings.Join(cgf.ToFaxNumber, "|"),
+		"sCallerID":    cfg.CallerID,
+		"sSenderEmail": cfg.SenderEmail,
+		"sFaxType":     cfg.FaxType,
+		"sToFaxNumber": strings.Join(cfg.ToFaxNumber, "|"),
 	}
 
 	// fail early if any of the above mandatory values are empty
