@@ -34,10 +34,6 @@ type mulFaxStatusRequest struct {
 // Where FaxDetailsID returned from a QueueFax operation.
 func (c *Client) GetMulFaxStatus(ids string) (*MulFaxStatus, error) {
 
-	// if len(ids) == 0 {
-	// 	return nil, errors.New("when getting multiple fax status, must supply one or more FaxDetailsIDs (ids)")
-	// }
-
 	req := mulFaxStatusRequest{
 		Action: actionGetMulFaxStatus,
 		IDs:    ids,
