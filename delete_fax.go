@@ -13,12 +13,21 @@ type DeleteResp struct {
 	Result string `mapstructure:"Result"`
 }
 
-// DeleteFax deletes one or more received or sent faxes.
+// DeleteFax deletes one or more received or sent faxes for a given direction.
 //
-// dir is the direction of fax: "IN" or "OUT" for inbound or outbound fax
+// dir (direction) must be one of "IN" or "OUT" for inbound or outbound.
+//
+// ids is a slice of faxes to delete based on FaxFileName or FaxDetailsID.
+// These are unique identifiers returned from a GetFaxOutbox or GetFaxInbox operation.
+// Note, this method will take care of formatting the request accordingly, so it is
+// safe to mix filenames with IDs: []string{"20170721124555-1213-4_0|272568938", "172568938"}
 func (c *Client) DeleteFax(ids []string, dir string) (*DeleteResp, error) {
 	if !(dir == inbound || dir == outbound) {
 		return nil, errors.New(`dir (direction) must be one of either "IN" or "OUT"`)
+	}
+
+	if len(ids) <= 0 {
+		return nil, errors.New("must supply one or more identifiers when deleting faxes")
 	}
 
 	req := map[string]interface{}{
@@ -32,10 +41,6 @@ func (c *Client) DeleteFax(ids []string, dir string) (*DeleteResp, error) {
 		prefixName = "sFaxFileName_"
 		prefixID   = "sFaxDetailsID_"
 	)
-
-	if len(ids) <= 0 {
-		return nil, errors.New("must supply one or more identifiers when deleting faxes. Accepts multiple fax file names or multiple IDs")
-	}
 
 	for i, j := range ids {
 		if strings.Contains(j, "|") {
