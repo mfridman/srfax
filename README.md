@@ -59,15 +59,17 @@ There is a convenience method to check authentication:
 ```go
 ok, err := client.CheckAuth()
 if err != nil {
-    log.SetFlags(0)
-    log.Fatalln(err) // Failed: Invalid Access Code / Password
+    fmt.Printf("ok: %t, err: %s\n", ok, err) // ok: false, err: Failed: Invalid Access Code / Password
+    os.Exit(1)
 }
 fmt.Println(ok) // true
 ```
 
 With a `*Client` one runs all the supported SRFax operations. For each method this client will construct a request, send it via POST and decode the response into a corresponding type.
 
-Some methods require many arguments so they'll typically be wrapped in a struct with a Cfg suffix. Likewise some accept optional arguments and will be wrapped in a struct with an Opts suffix.
+Some methods require many arguments so they'll typically be wrapped in a struct with a Cfg suffix (E.g., ForwardFax, QueueFax and UpdateViewedStatus). 
+
+Some methods accept optional arguments and will be wrapped in a struct with an Options suffix.
 
 Examples for all methods will be found in the [wiki](https://github.com/mfridman/srfax/wiki). The following is a quick example to get you started:
 
@@ -94,8 +96,8 @@ Output:
         "BillingNumber": "mf192@icloud.com",
         "UserID": 00001,
         "SubUserID": 0,
-        "NumberOfFaxes": 140,
-        "NumberOfPages": 240
+        "NumberOfFaxes": 40,
+        "NumberOfPages": 98
     }]
 }
 ```
