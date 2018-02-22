@@ -8,6 +8,7 @@ import (
 )
 
 // ClientCfg specifies parameters required for establishing an SRFax client.
+// Both ID and Pwd are unique to an SRFax account.
 type ClientCfg struct {
 	// access_id
 	ID int
@@ -17,15 +18,15 @@ type ClientCfg struct {
 }
 
 // NewClient returns an SRFax client based on supplied configuration.
-func NewClient(c ClientCfg) (*Client, error) {
-	if c.ID <= 0 {
+func NewClient(cfg ClientCfg) (*Client, error) {
+	if cfg.ID <= 0 {
 		return nil, errors.New("access id (ID) must be a positive number")
 	}
-	if c.Pwd == "" {
+	if cfg.Pwd == "" {
 		return nil, errors.New("password (Pwd) cannot be blank")
 	}
 
-	return &Client{AccessID: c.ID, AccessPwd: c.Pwd}, nil
+	return &Client{AccessID: cfg.ID, AccessPwd: cfg.Pwd}, nil
 }
 
 // Client is an SRFax client that contains authentication information
@@ -37,8 +38,7 @@ type Client struct {
 // CheckAuth verifies client's ability to authenticate with SRFax. It is a wrapper around the
 // GetFaxUsage method. Convenience method to quickly check if access ID & Pwd are valid.
 func (c *Client) CheckAuth() (bool, error) {
-	_, err := c.GetFaxUsage()
-	if err != nil {
+	if _, err := c.GetFaxUsage(); err != nil {
 		return false, err
 	}
 
@@ -57,9 +57,11 @@ func (u *Usage) String() string {
 	return fmt.Sprintf("Account %d used %d pages from %v to %v", u.AccessID, u.TotalPages, u.StartDate.Format("Jan 02 2006"), u.EndDate.Format("Jan 02 2006"))
 }
 
-// PagesThisMonth reports pages used by ALL users of the account in the current month based on reset day.
-// Each account will have a unique reset day.
-func (c *Client) PagesThisMonth(day int) (*Usage, error) {
+// UsageCounter reports the number of pages used by ALL users of the account in
+// the current period based on the account's reset day. Each account will have a unique reset day.
+// To find the reset day navigate to My Account > Summary > look for "fax usage counter will reset on March 19, 2018",
+// for this example the reset day would be 19.
+func (c *Client) UsageCounter(day int) (*Usage, error) {
 
 	var start, end time.Time
 	layout := "20060102"
@@ -91,9 +93,9 @@ func (c *Client) PagesThisMonth(day int) (*Usage, error) {
 	}
 
 	u := Usage{
+		AccessID:  c.AccessID,
 		StartDate: start,
 		EndDate:   end,
-		AccessID:  c.AccessID,
 	}
 
 	for i := range resp.Result {
