@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ForwardOptions contains optional arguments when forwarding a fax.
+// ForwardOptions specify optional arguments when forwarding a fax.
 type ForwardOptions struct {
 	SubUserID     int    `json:"sSubUserID,omitempty"`
 	AccountCode   string `json:"sAccountCode,omitempty"`
@@ -59,7 +59,7 @@ func (o *ForwardOptions) validate() error {
 	return nil
 }
 
-// ForwardCfg contains mandatory arguments when forwarding a fax.
+// ForwardCfg specifies mandatory arguments when forwarding a fax.
 type ForwardCfg struct {
 	// Either FaxFileName or FaxDetailsID must be supplied
 	FaxDetailsID string `json:"sFaxDetailsID,omitempty"`

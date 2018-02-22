@@ -10,7 +10,7 @@ type ViewedStatus struct {
 	Result string `mapstructure:"Result"`
 }
 
-// ViewedStatusCfg contains mandatory arguments when updating the Viewed status of a fax.
+// ViewedStatusCfg specifies mandatory arguments when updating the Viewed status of a fax.
 type ViewedStatusCfg struct {
 	// Either the FaxFileName or the FaxDetailsID must be supplied
 	//

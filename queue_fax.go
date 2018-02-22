@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// QueueOptions contains optional arguments when sending faxes.
+// QueueOptions specify optional arguments when sending faxes.
 //
 // If the default cover page on the account is set to "Attachments ONLY" the cover page will
 // not be created irrespective of this variable
@@ -38,7 +38,7 @@ type QueueOptions struct {
 	QueueFaxTime string `srfax:"sQueueFaxTime"`
 }
 
-// QueueCfg contains mandatory arguments when sending faxes.
+// QueueCfg specify mandatory arguments when sending faxes.
 //
 // If sending to a single number use SINGLE and pass in a slice of len 1.
 // Otherwise use BROADCAST and pass in a slice of numbers (as string)

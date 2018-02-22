@@ -4,7 +4,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// InboxOptions contains optional arguments when retrieving inbox items.
+// InboxOptions specify optional arguments when retrieving inbox items.
 type InboxOptions struct {
 	Period          string `json:"sPeriod,omitempty"`
 	StartDate       string `json:"sStartDate,omitempty"`

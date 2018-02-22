@@ -24,7 +24,8 @@ type ResultError struct {
 
 func (r *ResultError) Error() string { return fmt.Sprintf("%v: %v", r.Status, r.Raw) }
 
-// sendPost is a wrapper around Post. Sends JSON encoded request to SRFax and decodes response body.
+// sendPost is a wrapper around http.Post method.
+// Sends a JSON encoded request to SRFax and decodes the response body.
 func sendPost(req interface{}) (map[string]interface{}, error) {
 
 	client := http.Client{

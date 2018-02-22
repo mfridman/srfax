@@ -2,7 +2,7 @@ package srfax
 
 import "github.com/pkg/errors"
 
-// FaxUsageOptions contains optional arguments to modify fax usage report.
+// FaxUsageOptions specify optional arguments to modify fax usage report.
 type FaxUsageOptions struct {
 	Period          string `json:"sPeriod,omitempty"`
 	StartDate       string `json:"sStartDate,omitempty"`

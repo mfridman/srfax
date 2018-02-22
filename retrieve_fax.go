@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// RetrieveOptions contains optional arguments when retriving faxes.
+// RetrieveOptions specify optional arguments when retriving faxes.
 type RetrieveOptions struct {
 	SubUserID    string `json:"sSubUserID,omitempty"`
 	FaxFormat    string `json:"sFaxFormat,omitempty"`

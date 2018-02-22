@@ -2,7 +2,7 @@ package srfax
 
 import "github.com/pkg/errors"
 
-// OutboxOptions contains optional arguments when retrieving outbox items.
+// OutboxOptions specify optional arguments when retrieving outbox items.
 type OutboxOptions struct {
 	Period          string `json:"sPeriod,omitempty"`
 	StartDate       string `json:"sStartDate,omitempty"`
