@@ -145,7 +145,6 @@ func (c *Client) ForwardFax(cfg ForwardCfg, options ...ForwardOptions) (*Forward
 		opts = options[0]
 	}
 	opr := newForwardOperation(c, &cfg, &opts)
-	PP(opr)
 	resp := ForwardResp{}
 	if err := run(opr, &resp); err != nil {
 		return nil, err
