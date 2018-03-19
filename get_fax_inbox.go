@@ -23,25 +23,20 @@ func (o *InboxOptions) validate() error {
 			}
 		case "ALL":
 			if o.StartDate != "" || o.EndDate != "" {
-				return errors.New("StartDate or EndDate only required when Period set to RANGE")
+				return errors.New("StartDate and EndDate are not required when Period set to ALL")
 			}
 		default:
 			return errors.New("Period must be ALL|RANGE")
 		}
-
 	}
 
-	if o.IncludeSubUsers != "" && o.IncludeSubUsers != "Y" {
-		return errors.New(`IncludeSubUsers must be blank or set to "Y"`)
+	if o.IncludeSubUsers != "" && o.IncludeSubUsers != yes {
+		return errors.Errorf(`IncludeSubUsers must be blank or set to "%s"`, yes)
 	}
 
 	if o.ViewedStatus != "" {
 		switch o.ViewedStatus {
-		case "UNREAD":
-			break
-		case "READ":
-			break
-		case "ALL":
+		case "UNREAD", "READ", "ALL":
 			break
 		default:
 			return errors.New("ViewedStatus must be blank or one of READ|UNREAD|ALL")
@@ -69,33 +64,30 @@ type Inbox struct {
 	} `mapstructure:"Result"`
 }
 
-// inboxRequest defines the POST variables for a GetFaxInbox request
-type inboxRequest struct {
+// inboxOperation defines the POST variables for a GetFaxInbox operation.
+type inboxOperation struct {
 	Action string `json:"action"`
 	Client
 	InboxOptions
+}
+
+func newInboxOperation(c *Client, o *InboxOptions) *inboxOperation {
+	return &inboxOperation{Action: actionGetFaxInbox, Client: *c, InboxOptions: *o}
 }
 
 // GetFaxInbox retrieves a list of faxes received for a specified period of time.
 func (c *Client) GetFaxInbox(options ...InboxOptions) (*Inbox, error) {
 	opts := InboxOptions{}
 	if len(options) >= 1 {
-		opts = options[0]
-		if err := opts.validate(); err != nil {
+		if err := options[0].validate(); err != nil {
 			return nil, err
 		}
+		opts = options[0]
 	}
-
-	req := inboxRequest{
-		Action:       actionGetFaxInbox,
-		Client:       *c,
-		InboxOptions: opts,
-	}
-
-	var resp Inbox
-	if err := run(req, &resp); err != nil {
+	resp := Inbox{}
+	opr := newInboxOperation(c, &opts)
+	if err := run(opr, &resp); err != nil {
 		return nil, err
 	}
-
 	return &resp, nil
 }

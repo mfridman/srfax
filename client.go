@@ -25,12 +25,15 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 	if cfg.Pwd == "" {
 		return nil, errors.New("password (Pwd) cannot be blank")
 	}
-
-	return &Client{AccessID: cfg.ID, AccessPwd: cfg.Pwd}, nil
+	return &Client{account{AccessID: cfg.ID, AccessPwd: cfg.Pwd}}, nil
 }
 
-// Client is an SRFax client that contains authentication information
+// Client is an SRFax client.
 type Client struct {
+	account
+}
+
+type account struct {
 	AccessID  int    `json:"access_id"`
 	AccessPwd string `json:"access_pwd"`
 }
@@ -41,7 +44,6 @@ func (c *Client) CheckAuth() (bool, error) {
 	if _, err := c.GetFaxUsage(); err != nil {
 		return false, err
 	}
-
 	return true, nil
 }
 
@@ -81,7 +83,7 @@ func (c *Client) UsageCounter(day int) (*Usage, error) {
 	}
 
 	opts := FaxUsageOptions{
-		IncludeSubUsers: "Y",
+		IncludeSubUsers: yes,
 		Period:          "RANGE",
 		StartDate:       start.Format(layout),
 		EndDate:         end.Format(layout),

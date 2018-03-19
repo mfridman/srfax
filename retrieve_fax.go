@@ -10,14 +10,23 @@ import (
 
 // RetrieveOptions specify optional arguments when retriving faxes.
 type RetrieveOptions struct {
-	SubUserID    string `json:"sSubUserID,omitempty"`
-	FaxFormat    string `json:"sFaxFormat,omitempty"`
+	// The account number of a sub account,
+	// if you want to use a master account to download a sub account’s fax
+	SubUserID string `json:"sSubUserID,omitempty"`
+
+	// "PDF" or "TIFF", defaults to account settings if not supplied
+	FaxFormat string `json:"sFaxFormat,omitempty"`
+
+	// "Y" mark fax as viewed once method completes successfully.
+	// "N" leave viewed status as is (default)
 	MarkAsViewed string `json:"sMarkasViewed,omitempty"`
 }
 
 // RetrieveResp is the response from retrieving a fax.
 type RetrieveResp struct {
 	Status string `mapstructure:"Status"`
+
+	// If successful the Result field will contain Base64 encoded fax file contents
 	Result string `mapstructure:"Result"`
 }
 
@@ -33,54 +42,57 @@ func (r *RetrieveResp) DecodeResult() ([]byte, error) {
 	return b, nil
 }
 
-// retrieveRequest defines the POST variables for a RetrieveFax request
-type retrieveRequest struct {
+// retrieveOperation defines the POST variables for a RetrieveFax request
+type retrieveOperation struct {
 	Action string `json:"action"`
 	Client
-	FaxDetailsID int    `json:"sFaxDetailsID,omitempty"` // Either the FaxFileName or the FaxDetailsID must be supplied
-	FaxFileName  string `json:"sFaxFileName,omitempty"`  // Either the FaxFileName or the FaxDetailsID must be supplied
-	Direction    string `json:"sDirection"`              // "IN" or "OUT" for inbound or outbound fax
+
+	// Either the FaxFileName or the FaxDetailsID must be supplied
+	FaxDetailsID int    `json:"sFaxDetailsID,omitempty"`
+	FaxFileName  string `json:"sFaxFileName,omitempty"`
+
+	// "IN" or "OUT" for inbound or outbound fax
+	Direction string `json:"sDirection"`
+
 	RetrieveOptions
+}
+
+func newRetrieveOperation(c *Client, ident, dir string, o *RetrieveOptions) (*retrieveOperation, error) {
+	op := &retrieveOperation{Action: actionRetrieveFax, Client: *c, Direction: dir, RetrieveOptions: *o}
+	if strings.Contains(ident, "|") {
+		op.FaxFileName = ident
+	} else {
+		n, err := strconv.Atoi(ident)
+		if err != nil {
+			return nil, errors.New("failed ident string to int conversion")
+		}
+		op.FaxDetailsID = n
+	}
+	return op, nil
 }
 
 // RetrieveFax returns a sent or received fax file in PDF or TIFF format.
 //
-// ident is the sFaxDetailsID & sFaxFileName returned from GetFaxInbox or GetFaxOutbox,
-// only one of sFaxDetailsID or sFaxFileName must be supplied as a string.
+// ident will be either an sFaxDetailsID or sFaxFileName, returned from GetFaxInbox or GetFaxOutbox operation.
+// Note, only one of sFaxDetailsID or sFaxFileName must be supplied.
 //
-// If operation succeeds the Result value contain a base64-encoded string.
+// If operation succeeds the Result value contains a base64-encoded string.
 // The file format will be "PDF" or "TIF" – defaults to account settings if FaxFormat not supplied in optional args.
 func (c *Client) RetrieveFax(ident, dir string, options ...RetrieveOptions) (*RetrieveResp, error) {
 	opts := RetrieveOptions{}
 	if len(options) >= 1 {
 		opts = options[0]
 	}
-
 	if !(dir == inbound || dir == outbound) {
-		return nil, errors.Errorf("Direction must be either: %s or %s", inbound, outbound)
+		return nil, errors.Errorf("Direction must be one of: %s or %s", inbound, outbound)
 	}
-
-	req := retrieveRequest{
-		Action:          actionRetrieveFax,
-		Client:          *c,
-		Direction:       dir,
-		RetrieveOptions: opts,
-	}
-
-	if strings.Contains(ident, "|") {
-		req.FaxFileName = ident
-	} else {
-		n, err := strconv.Atoi(ident)
-		if err != nil {
-			return nil, errors.New("failed ident string to int conversion")
-		}
-		req.FaxDetailsID = n
-	}
-
-	var resp RetrieveResp
-	if err := run(req, &resp); err != nil {
+	resp := RetrieveResp{}
+	op, err := newRetrieveOperation(c, ident, dir, &opts)
+	if err != nil {
 		return nil, err
 	}
-
+	if err := run(op, &resp); err != nil {
+		return nil, err
+	}
 	return &resp, nil
 }

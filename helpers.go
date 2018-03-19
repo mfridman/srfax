@@ -78,15 +78,15 @@ func sendPost(req interface{}) (map[string]interface{}, error) {
 // error messages.
 func checkStatus(ms map[string]interface{}) (string, error) {
 	if _, ok := ms["Status"]; !ok {
-		return "", errors.New(`missing "Status" key in response`)
+		return "", errors.New(`missing "Status" field in response`)
 	}
 	status, ok := ms["Status"].(string)
 	if !ok {
 		return "", errors.Errorf(`failed "Status" type assertion; expecting String but got %T`, ms["Status"])
 	}
-	if !(strings.ToLower(status) == "success") {
+	if strings.ToLower(status) != "success" {
 		if _, ok := ms["Result"]; !ok {
-			return "", errors.New(`missing "Result" key in response`)
+			return "", errors.New(`missing "Result" field in response`)
 		}
 		result, ok := ms["Result"].(string)
 		if !ok {

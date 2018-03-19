@@ -24,13 +24,10 @@ func (o *OutboxOptions) validate() error {
 		default:
 			return errors.New("Period must be ALL|RANGE")
 		}
-
 	}
-
-	if o.IncludeSubUsers != "" && o.IncludeSubUsers != "Y" {
-		return errors.New(`IncludeSubUsers must be blank or set to "Y"`)
+	if o.IncludeSubUsers != "" && o.IncludeSubUsers != yes {
+		return errors.Errorf(`IncludeSubUsers must be blank or set to "%s"`, yes)
 	}
-
 	return nil
 }
 
@@ -56,33 +53,30 @@ type Outbox struct {
 	} `mapstructure:"Result"`
 }
 
-// outboxRequest defines the POST variables for a GetFaxOutbox request
-type outboxRequest struct {
+// outboxOperation defines the POST variables for a GetFaxOutbox request
+type outboxOperation struct {
 	Action string `json:"action"`
 	Client
 	OutboxOptions
+}
+
+func newOutboxOperation(c *Client, o *OutboxOptions) *outboxOperation {
+	return &outboxOperation{Action: actionGetFaxOutbox, Client: *c, OutboxOptions: *o}
 }
 
 // GetFaxOutbox retrieves a list of faxes sent for a specified period of time.
 func (c *Client) GetFaxOutbox(options ...OutboxOptions) (*Outbox, error) {
 	opts := OutboxOptions{}
 	if len(options) >= 1 {
-		opts = options[0]
-		if err := opts.validate(); err != nil {
+		if err := options[0].validate(); err != nil {
 			return nil, err
 		}
+		opts = options[0]
 	}
-
-	req := outboxRequest{
-		Action:        actionGetFaxOutbox,
-		Client:        *c,
-		OutboxOptions: opts,
-	}
-
-	var resp Outbox
-	if err := run(req, &resp); err != nil {
+	resp := Outbox{}
+	opr := newOutboxOperation(c, &opts)
+	if err := run(opr, &resp); err != nil {
 		return nil, err
 	}
-
 	return &resp, nil
 }

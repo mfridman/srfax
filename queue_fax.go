@@ -16,26 +16,26 @@ import (
 //
 // "Basic", "Standard", "Company", or "Personal"
 //
-// srfax is a custom tag used for reflection (specific to this struct).
+// json tag used for reflection.
 type QueueOptions struct {
-	Retries       int    `srfax:"sRetries"`
-	AccountCode   string `srfax:"sAccountCode"`
-	FaxFromHeader string `srfax:"sFaxFromHeader"`
+	Retries       int    `json:"sRetries"`
+	AccountCode   string `json:"sAccountCode"`
+	FaxFromHeader string `json:"sFaxFromHeader"`
 
 	// cover page
-	CoverPage      string `srfax:"sCoverPage"`
-	CPFromName     string `srfax:"sCPFromName"`
-	CPToName       string `srfax:"sCPToName"`
-	CPOrganization string `srfax:"sCPOrganization"`
-	CPSubject      string `srfax:"sCPSubject"`
-	CPComments     string `srfax:"sCPComments"`
+	CoverPage      string `json:"sCoverPage"`
+	CPFromName     string `json:"sCPFromName"`
+	CPToName       string `json:"sCPToName"`
+	CPOrganization string `json:"sCPOrganization"`
+	CPSubject      string `json:"sCPSubject"`
+	CPComments     string `json:"sCPComments"`
 
-	NotifyURL string `srfax:"sNotifyURL"`
+	NotifyURL string `json:"sNotifyURL"`
 
 	// YYYY-MM-DD
-	QueueFaxDate string `srfax:"sQueueFaxDate"`
+	QueueFaxDate string `json:"sQueueFaxDate"`
 	// HH:MM, using 24 hour time
-	QueueFaxTime string `srfax:"sQueueFaxTime"`
+	QueueFaxTime string `json:"sQueueFaxTime"`
 }
 
 // QueueCfg specify mandatory arguments when sending faxes.
@@ -72,7 +72,7 @@ type QueueFaxResp struct {
 //
 // If Files is nil, the CoverPage option must be enabled. Otherwise will receive error: No Files to Fax
 func (c *Client) QueueFax(files Files, cfg QueueCfg, options ...QueueOptions) (*QueueFaxResp, error) {
-	req := map[string]interface{}{
+	opr := map[string]interface{}{
 		"action":       actionQueueFax,
 		"access_id":    c.AccessID,
 		"access_pwd":   c.AccessPwd,
@@ -90,14 +90,14 @@ func (c *Client) QueueFax(files Files, cfg QueueCfg, options ...QueueOptions) (*
 		"ResultError": "Invalid CallerID provided / "
 		"ResultError": "Forbidden: Access is denied / Invalid Authentication."
 	*/
-	if err := failIfEmpty(req); err != nil {
+	if err := failIfEmpty(opr); err != nil {
 		return nil, err
 	}
 
 	// build up optional, non-empty, options based on srfax tags through reflection.
-	// TODO this may not be the best approach. Hard to test and may be prone to error.
-	// Think about writing a function to parse optional args, build a map and merge with existing request map.
-	if len(options) > 0 {
+	// TODO this may not be the best approach. Hard to test.
+	// Think about writing a function to parse optional args, build a map and merge with existing operation map.
+	if len(options) >= 1 {
 		v := reflect.ValueOf(options[0])
 
 		for i := 0; i < v.NumField(); i++ {
@@ -106,20 +106,20 @@ func (c *Client) QueueFax(files Files, cfg QueueCfg, options ...QueueOptions) (*
 				if v.Field(i).String() == "" {
 					continue
 				}
-				s, ok := reflect.TypeOf(options[0]).Field(i).Tag.Lookup("srfax")
+				s, ok := reflect.TypeOf(options[0]).Field(i).Tag.Lookup("json")
 				if !ok {
 					return nil, errors.Errorf("QueueFax: failed string reflection on optional arguments")
 				}
-				req[s] = v.Field(i).String()
+				opr[s] = v.Field(i).String()
 			case int:
 				if v.Field(i).Int() <= 0 || v.Field(i).Int() > 6 {
 					continue
 				}
-				s, ok := reflect.TypeOf(options[0]).Field(i).Tag.Lookup("srfax")
+				s, ok := reflect.TypeOf(options[0]).Field(i).Tag.Lookup("json")
 				if !ok {
 					return nil, errors.Errorf("QueueFax: failed int reflection on optional arguments")
 				}
-				req[s] = v.Field(i).Int()
+				opr[s] = v.Field(i).Int()
 			}
 		}
 	}
@@ -129,46 +129,43 @@ func (c *Client) QueueFax(files Files, cfg QueueCfg, options ...QueueOptions) (*
 		prefixContent = "sFileContent_"
 	)
 
-	emptyFiles := make([]File, 0)
 	// Don't fail if len == 0, because SRFax can queue a cover page only,
-	// this is why this method accepts nil as an argument to Files.
+	// this is why this method accepts nil as an argument to Files. If file(s) are missing
+	// name or content they get stored in emptyFiles and if slice is not zero return error.
+	emptyFiles := make(Files, 0)
 	if len(files) > 0 {
 		for i, f := range files {
 			if f.Name == "" || f.Content == "" {
 				emptyFiles = append(emptyFiles, f)
 			}
-			req[prefixName+strconv.Itoa(i)] = f.Name
-			req[prefixContent+strconv.Itoa(i)] = f.Content
+			opr[prefixName+strconv.Itoa(i)] = f.Name
+			opr[prefixContent+strconv.Itoa(i)] = f.Content
 		}
-
 		if len(emptyFiles) > 0 {
 			return nil, errors.Errorf("skipping empty file(s), check name or content: %+v", emptyFiles)
 		}
 	}
 
-	var resp QueueFaxResp
-	if err := run(req, &resp); err != nil {
+	resp := QueueFaxResp{}
+	if err := run(opr, &resp); err != nil {
 		return nil, err
 	}
-
 	return &resp, nil
 }
 
-// failIfEmpty takes a map to check if any value is empty. If a value is empty
-// the corresponding key is stored in slice and error is returned.
+// failIfEmpty takes a map to check if a value is zero-value (string and int). If a value is empty
+// the corresponding key is stored in slice and an error is returned.
 //
-// Convenience func to fail early in the event a mandatory config field is missing.
+// Convenience func to fail early if a mandatory field(s) empty.
 func failIfEmpty(m map[string]interface{}) error {
 	em := make([]string, 0)
-
 	for k, v := range m {
-		if v == "" {
+		if v == "" || v == 0 {
 			em = append(em, k)
 		}
 	}
 	if len(em) != 0 {
 		return errors.Errorf("check QueueCfg, the following fields cannot be empty: %s", strings.Join(em, ", "))
 	}
-
 	return nil
 }

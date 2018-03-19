@@ -30,41 +30,35 @@ func (c *ViewedStatusCfg) validate() error {
 	if c.FaxDetailsID > 0 && c.FaxFileName != "" {
 		return errors.New("Either FaxFileName or FaxDetailsID must be supplied, not both")
 	}
-
 	if !(c.Direction == inbound || c.Direction == outbound) {
 		return errors.Errorf("Direction must be either: %s or %s", inbound, outbound)
 	}
-
 	if !(c.MarkAsViewed == yes || c.MarkAsViewed == no) {
 		return errors.Errorf("MarkAsViewed must be either: %s or %s", yes, no)
 	}
 	return nil
 }
 
-// viewedStatusRequest defines the POST variables for a UpdateViewedStatus request
-type viewedStatusRequest struct {
+// viewedStatusOperation defines the POST variables for a UpdateViewedStatus request
+type viewedStatusOperation struct {
 	Action string `json:"action"`
 	Client
 	ViewedStatusCfg
 }
 
+func newViewedStatusOperation(c *Client, cfg *ViewedStatusCfg) *viewedStatusOperation {
+	return &viewedStatusOperation{Action: actionUpdateViewedStatus, Client: *c, ViewedStatusCfg: *cfg}
+}
+
 // UpdateViewedStatus marks an inbound or outbound fax as read or unread.
 func (c *Client) UpdateViewedStatus(cfg ViewedStatusCfg) (*ViewedStatus, error) {
-
 	if err := cfg.validate(); err != nil {
 		return nil, err
 	}
-
-	req := viewedStatusRequest{
-		Action:          actionUpdateViewedStatus,
-		Client:          *c,
-		ViewedStatusCfg: cfg,
-	}
-
-	var resp ViewedStatus
-	if err := run(req, &resp); err != nil {
+	resp := ViewedStatus{}
+	op := newViewedStatusOperation(c, &cfg)
+	if err := run(op, &resp); err != nil {
 		return nil, err
 	}
-
 	return &resp, nil
 }

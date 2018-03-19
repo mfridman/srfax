@@ -1,6 +1,8 @@
 package srfax
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
 
 // FaxUsageOptions specify optional arguments to modify fax usage report.
 type FaxUsageOptions struct {
@@ -24,13 +26,10 @@ func (o *FaxUsageOptions) validate() error {
 		default:
 			return errors.New("Period must be ALL|RANGE")
 		}
-
 	}
-
-	if o.IncludeSubUsers != "" && o.IncludeSubUsers != "Y" {
-		return errors.New(`IncludeSubUsers must be blank or set to "Y"`)
+	if o.IncludeSubUsers != "" && o.IncludeSubUsers != yes {
+		return errors.Errorf(`IncludeSubUsers must be blank or set to "%s"`, yes)
 	}
-
 	return nil
 }
 
@@ -48,33 +47,30 @@ type FaxUsage struct {
 	} `mapstructure:"Result"`
 }
 
-// faxUsageRequest defines the POST variables for a GetFaxUsage request
-type faxUsageRequest struct {
+// faxUsageOperation defines the POST variables for a GetFaxUsage request
+type faxUsageOperation struct {
 	Action string `json:"action"`
 	Client
 	FaxUsageOptions
+}
+
+func newFaxUsageOperation(c *Client, opts *FaxUsageOptions) *faxUsageOperation {
+	return &faxUsageOperation{Action: actionGetFaxUsage, Client: *c, FaxUsageOptions: *opts}
 }
 
 // GetFaxUsage reports usage for a specified user and period.
 func (c *Client) GetFaxUsage(options ...FaxUsageOptions) (*FaxUsage, error) {
 	opts := FaxUsageOptions{}
 	if len(options) >= 1 {
-		opts = options[0]
-		if err := opts.validate(); err != nil {
+		if err := options[0].validate(); err != nil {
 			return nil, err
 		}
+		opts = options[0]
 	}
-
-	req := faxUsageRequest{
-		Action:          actionGetFaxUsage,
-		Client:          *c,
-		FaxUsageOptions: opts,
-	}
-
-	var resp FaxUsage
-	if err := run(req, &resp); err != nil {
+	resp := FaxUsage{}
+	opr := newFaxUsageOperation(c, &opts)
+	if err := run(opr, &resp); err != nil {
 		return nil, err
 	}
-
 	return &resp, nil
 }
