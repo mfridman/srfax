@@ -59,9 +59,6 @@ type File struct {
 	Content string
 }
 
-// Files is a slice of quequeable File items.
-type Files []File
-
 // QueueFaxResp represents information about faxes added to the queue.
 type QueueFaxResp struct {
 	Status string `mapstructure:"Status"`
@@ -71,7 +68,7 @@ type QueueFaxResp struct {
 // QueueFax adds fax item(s) to a queue for delivery.
 //
 // If Files is nil, the CoverPage option must be enabled. Otherwise will receive error: No Files to Fax
-func (c *Client) QueueFax(files Files, cfg QueueCfg, options ...QueueOptions) (*QueueFaxResp, error) {
+func (c *Client) QueueFax(files []File, cfg QueueCfg, options ...QueueOptions) (*QueueFaxResp, error) {
 	opr := map[string]interface{}{
 		"action":       actionQueueFax,
 		"access_id":    c.AccessID,
@@ -132,7 +129,7 @@ func (c *Client) QueueFax(files Files, cfg QueueCfg, options ...QueueOptions) (*
 	// Don't fail if len == 0, because SRFax can queue a cover page only,
 	// this is why this method accepts nil as an argument to Files. If file(s) are missing
 	// name or content they get stored in emptyFiles and if slice is not zero return error.
-	emptyFiles := make(Files, 0)
+	emptyFiles := make([]File, 0)
 	if len(files) > 0 {
 		for i, f := range files {
 			if f.Name == "" || f.Content == "" {
