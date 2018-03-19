@@ -6,8 +6,6 @@
 
 The official SRFax API documentation can be found [here](https://www.srfax.com/api-page/getting-started/)
 
-**The current client is under development and the API may change. There is no guarantee of backwards compatibility at this time.**
-
 ---
 
 ### A note about error handling
@@ -65,7 +63,7 @@ if err != nil {
 fmt.Println(ok) // true
 ```
 
-With a `*Client` one runs all the supported SRFax operations. For each method this client will construct a request, send it via POST and decode the response into a corresponding type.
+With a `*Client` one runs all the supported SRFax operations. For each method this client will construct a request operation, send it via POST and decode the response into a corresponding type.
 
 Some methods require many arguments so they'll typically be wrapped in a struct with a Cfg suffix (E.g., ForwardFax, QueueFax and UpdateViewedStatus). 
 
@@ -76,9 +74,9 @@ Examples for all methods will be found in the [wiki](https://github.com/mfridman
 #### Example:
 
 ```go
-resp, err := client.GetFaxUsage() // resp is of type *GetFaxUsageResp
+resp, err := client.GetFaxUsage() // resp is of type *FaxUsage
 if err != nil {
-	// handle error
+    // handle error
 }
 
 // use convenience func PP to pretty print response to terminal.
@@ -89,15 +87,26 @@ Output:
 
 ```json
 {
-    "Status": "Success",
-    "Result": [{
-        "Period": "ALL",
-        "ClientName": "Michael Fridman",
-        "BillingNumber": "mf192@icloud.com",
-        "UserID": 00001,
-        "SubUserID": 0,
-        "NumberOfFaxes": 40,
-        "NumberOfPages": 98
-    }]
+  "Status": "Success",
+  "Result": [
+    {
+      "Period": "ALL",
+      "ClientName": "Michael Fridman",
+      "BillingNumber": "mf192@icloud.com",
+      "UserID": 92126,
+      "SubUserID": 0,
+      "NumberOfFaxes": 11,
+      "NumberOfPages": 11
+    },
+    {
+      "Period": "ALL",
+      "ClientName": "Michael Fridman",
+      "BillingNumber": "6476892276",
+      "UserID": 92126,
+      "SubUserID": 0,
+      "NumberOfFaxes": 11,
+      "NumberOfPages": 11
+    }
+  ]
 }
 ```
