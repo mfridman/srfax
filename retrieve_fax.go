@@ -57,8 +57,8 @@ type retrieveOperation struct {
 	RetrieveOptions
 }
 
-func newRetrieveOperation(c *Client, ident, dir string, o *RetrieveOptions) (*retrieveOperation, error) {
-	op := &retrieveOperation{Action: actionRetrieveFax, Client: *c, Direction: dir, RetrieveOptions: *o}
+func newRetrieveOperation(c *Client, ident, direction string, o *RetrieveOptions) (*retrieveOperation, error) {
+	op := &retrieveOperation{Action: actionRetrieveFax, Client: *c, Direction: direction, RetrieveOptions: *o}
 	if strings.Contains(ident, "|") {
 		op.FaxFileName = ident
 	} else {
@@ -78,16 +78,16 @@ func newRetrieveOperation(c *Client, ident, dir string, o *RetrieveOptions) (*re
 //
 // If operation succeeds the Result value contains a base64-encoded string.
 // The file format will be "PDF" or "TIF" – defaults to account settings if FaxFormat not supplied in optional args.
-func (c *Client) RetrieveFax(ident, dir string, options ...RetrieveOptions) (*RetrieveResp, error) {
+func (c *Client) RetrieveFax(ident, direction string, options ...RetrieveOptions) (*RetrieveResp, error) {
 	opts := RetrieveOptions{}
 	if len(options) >= 1 {
 		opts = options[0]
 	}
-	if !(dir == inbound || dir == outbound) {
+	if !(direction == inbound || direction == outbound) {
 		return nil, errors.Errorf("Direction must be one of: %s or %s", inbound, outbound)
 	}
 	resp := RetrieveResp{}
-	op, err := newRetrieveOperation(c, ident, dir, &opts)
+	op, err := newRetrieveOperation(c, ident, direction, &opts)
 	if err != nil {
 		return nil, err
 	}
