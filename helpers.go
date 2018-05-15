@@ -73,28 +73,37 @@ func sendPost(req interface{}) (map[string]interface{}, error) {
 // checkStatus checks existence for "Status" and "Result" keys in map and returns
 // the status and an error message from Result.
 //
-// If Status equals Success the function will return Success and nil error
-// This is going on the assumption (and doc examples) that successful operations do not return
-// error messages.
-func checkStatus(ms map[string]interface{}) (string, error) {
-	if _, ok := ms["Status"]; !ok {
-		return "", errors.New(`missing "Status" field in response`)
+// If Status equals Success the function will return nil.
+// The SRFax docs state that successful operations do not return error messages.
+func checkStatus(ms map[string]interface{}) error {
+	if ok := hasKeys(ms, []string{"Status", "Result"}); !ok {
+		return &ResultError{Status: "", Raw: `missing "Status" or "Result" key in response`}
 	}
 	status, ok := ms["Status"].(string)
 	if !ok {
-		return "", errors.Errorf(`failed "Status" type assertion; expecting String but got %T`, ms["Status"])
+		return &ResultError{Status: "", Raw: fmt.Sprintf(`failed "Status" type assertion; expecting String but got %T`, ms["Status"])}
 	}
 	if strings.ToLower(status) != "success" {
-		if _, ok := ms["Result"]; !ok {
-			return "", errors.New(`missing "Result" field in response`)
-		}
 		result, ok := ms["Result"].(string)
 		if !ok {
-			return "", errors.Errorf(`failed "Result" type assertion; expecting String but got %T`, ms["Result"])
+			return &ResultError{Status: "", Raw: fmt.Sprintf(`failed "Result" type assertion; expecting String but got %T`, ms["Status"])}
 		}
-		return status, errors.New(result)
+		return &ResultError{Status: status, Raw: result}
 	}
-	return status, nil
+	return nil
+}
+
+// hasKeys iterates over a given slice and checks string existence as a key in given map.
+func hasKeys(ms map[string]interface{}, ss []string) bool {
+	if len(ss) == 0 {
+		return false
+	}
+	for _, s := range ss {
+		if _, ok := ms[s]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 // PP is a convenience function to pretty print JSON.
@@ -107,7 +116,7 @@ func PP(i interface{}) {
 }
 
 // IDFromName parses a filename string and returns the ID.
-// File name format is usually "20180101230101-8812-34_0|31524120", where the
+// File name format expected "20180101230101-8812-34_0|31524120", where the
 // ID follows the pipe symbol.
 func IDFromName(s string) (int, error) {
 	ss := strings.SplitAfter(s, "|")
@@ -122,17 +131,15 @@ func IDFromName(s string) (int, error) {
 // decodeResp decodes response map into the underlying response type (rt).
 // It is a wrapper around Mitchell's mapstructure pkg.
 func decodeResp(resp map[string]interface{}, rt interface{}) error {
-	if st, err := checkStatus(resp); err != nil {
-		return &ResultError{Status: st, Raw: fmt.Sprint(err)}
+	if err := checkStatus(resp); err != nil {
+		return err
 	}
-
 	var md mapstructure.Metadata
 	cfg := &mapstructure.DecoderConfig{
 		WeaklyTypedInput: true,
 		Metadata:         &md,
 		Result:           rt,
 	}
-
 	decoder, err := mapstructure.NewDecoder(cfg)
 	if err != nil {
 		return errors.Wrapf(err, "mapstructure new decoder config error: [%+v]", cfg)
@@ -140,34 +147,36 @@ func decodeResp(resp map[string]interface{}, rt interface{}) error {
 	if err := decoder.Decode(resp); err != nil {
 		return errors.Wrapf(err, "mapstructure Decode error: [%+v]", resp)
 	}
-
 	// DEBUG only
 	// fmt.Println("DEBUG unused keys: ", cfg.Metadata.Unused)
-
 	return nil
 }
 
-// used to validate dates and times, caller must supply format layout.
+// used to validate dates and times with time.Parse, caller must supply format layout.
 func validDateOrTime(layout string, values ...string) bool {
+	if len(values) == 0 {
+		return false
+	}
 	for _, val := range values {
 		if _, err := time.Parse(layout, val); err != nil {
 			return false
 		}
 	}
-
 	return true
 }
 
 // Check a struct to make sure fields are not set to their zero value.
 // Supports string and int checking on non-embedded struct. Will skip fields with omitempty tag.
 func hasEmpty(i interface{}) error {
-
 	val := reflect.ValueOf(i)
-
+	if !val.IsValid() {
+		return errors.Errorf("%v is not a valid value", i)
+	}
 	n := val.NumField()
-
-	var empty []string
-
+	if n == 0 {
+		return errors.Errorf("struct cannot have %d fields", n)
+	}
+	empty := make([]string, 0)
 	for i := 0; i < n; i++ {
 		switch val.Field(i).Kind() {
 		case reflect.String:
@@ -186,7 +195,6 @@ func hasEmpty(i interface{}) error {
 		s := fmt.Sprintf("the following fields cannot be empty: %v", strings.Join(empty, ", "))
 		return errors.New(s)
 	}
-
 	return nil
 }
 
@@ -197,14 +205,14 @@ func isNChars(s string, length int) bool {
 	return true
 }
 
-func run(req, resp interface{}) error {
-	msg, err := sendPost(req)
+func run(opr, resp interface{}) error {
+	msg, err := sendPost(opr)
 	if err != nil {
-		return errors.Wrap(err, "SendPost error")
+		return errors.Wrap(err, "sendPost error")
 	}
 
 	if err := decodeResp(msg, resp); err != nil {
-		return err
+		return errors.Wrap(err, "decodeResp error")
 	}
 
 	return nil
