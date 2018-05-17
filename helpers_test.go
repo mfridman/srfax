@@ -19,10 +19,10 @@ func TestIDFromName(t *testing.T) {
 		{"20180101230101-|", 0},
 		{"", 0},
 	}
-	for _, tt := range tests {
-		got, _ := IDFromName(tt.in)
-		if tt.want != got {
-			t.Fatalf("IDFromName(%s): want %d, got %d", tt.in, tt.want, got)
+	for _, test := range tests {
+		got, _ := IDFromName(test.in)
+		if test.want != got {
+			t.Fatalf("IDFromName(%q) = %d; want %d", test.in, got, test.want)
 		}
 	}
 }
@@ -41,14 +41,13 @@ func TestCheckStatus(t *testing.T) {
 		{ms{"Status": "", "Result": 123}, &ResultError{}},
 		{ms{"Result": []string{}}, &ResultError{}},
 	}
-	for _, tt := range tests {
-		err := checkStatus(tt.in)
-		if err != nil {
+	for _, test := range tests {
+		if err := checkStatus(test.in); err != nil {
 			switch err.(type) {
 			case *ResultError:
 				break
 			default:
-				t.Fatalf("checkStatus(%v): want [%v], got [%v]", tt.in, tt.want, err)
+				t.Fatalf("checkStatus(%+v) = %v; want %v", test.in, err, test.want)
 			}
 		}
 	}
@@ -71,10 +70,10 @@ func TestHasKeys(t *testing.T) {
 		{ms{}, []string{}, false},
 		{ms{"abc": "", "def": ""}, []string{"Status"}, false},
 	}
-	for _, tt := range tests {
-		got := hasKeys(tt.m, tt.s)
-		if tt.want != got {
-			t.Fatalf("hasKey(%v, %v): want %t, got %t", tt.m, tt.s, tt.want, got)
+	for _, test := range tests {
+		got := hasKeys(test.m, test.s)
+		if test.want != got {
+			t.Fatalf("hasKey(%+v, %v) = %t; want %t", test.m, test.s, got, test.want)
 		}
 	}
 }
@@ -94,10 +93,10 @@ func TestIsNChars(t *testing.T) {
 		{"", 0, true},
 		{"", 1, false},
 	}
-	for _, tt := range tests {
-		got := isNChars(tt.s, tt.l)
-		if tt.want != got {
-			t.Fatalf("isNChars(%v, %v): want %t, got %t", tt.s, tt.l, tt.want, got)
+	for _, test := range tests {
+		got := isNChars(test.s, test.l)
+		if test.want != got {
+			t.Fatalf("isNChars(%q, %d) = %t; want %t", test.s, test.l, got, test.want)
 		}
 	}
 
@@ -116,10 +115,10 @@ func TestValidDateOrTime(t *testing.T) {
 		{"2006-01-02", []string{}, false},
 		{"20060102", []string{"198702-20"}, false},
 	}
-	for _, tt := range tests {
-		got := validDateOrTime(tt.layout, tt.values...)
-		if tt.want != got {
-			t.Fatalf("validDateOrTime(%v, %v): want %t, got %t", tt.layout, tt.values, tt.want, got)
+	for _, test := range tests {
+		got := validDateOrTime(test.layout, test.values...)
+		if test.want != got {
+			t.Fatalf("validDateOrTime(%q, %v) = %t; want %t", test.layout, test.values, got, test.want)
 		}
 	}
 }
@@ -157,7 +156,8 @@ func TestHasEmpty(t *testing.T) {
 		}
 
 		if err := hasEmpty(*c); err != nil {
-			t.Fatalf("hasEmpty(%+v): want nil, got error: %v", c, err)
+			t.Errorf("input: %+v", *c)
+			t.Fatal("got err; want nil")
 		}
 	})
 }
