@@ -17,13 +17,20 @@ type ClientCfg struct {
 	Pwd string
 }
 
-// NewClient returns an SRFax client based on supplied configuration.
-func NewClient(cfg ClientCfg) (*Client, error) {
+func (cfg ClientCfg) validate() error {
 	if cfg.ID <= 0 {
-		return nil, errors.New("access id (ID) must be a positive number")
+		return errors.New("access id (ID) must be a positive number")
 	}
 	if cfg.Pwd == "" {
-		return nil, errors.New("password (Pwd) cannot be blank")
+		return errors.New("password (Pwd) cannot be blank")
+	}
+	return nil
+}
+
+// NewClient returns an SRFax client based on supplied configuration.
+func NewClient(cfg ClientCfg) (*Client, error) {
+	if err := cfg.validate(); err != nil {
+		return nil, err
 	}
 	return &Client{account{AccessID: cfg.ID, AccessPwd: cfg.Pwd}}, nil
 }
