@@ -99,7 +99,7 @@ func (c *Client) QueueFax(files []File, cfg QueueCfg, options ...QueueOptions) (
 	// build up optional, non-empty, options based on srfax tags through reflection.
 	// TODO this may not be the best approach. Hard to test.
 	// Think about writing a function to parse optional args, build a map and merge with existing operation map.
-	if len(options) >= 1 {
+	if len(options) > 0 {
 		v := reflect.ValueOf(options[0])
 
 		for i := 0; i < v.NumField(); i++ {

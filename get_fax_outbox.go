@@ -88,7 +88,7 @@ func newOutboxOperation(c *Client, o *OutboxOptions) *outboxOperation {
 // GetFaxOutbox retrieves a list of faxes sent for a specified period of time.
 func (c *Client) GetFaxOutbox(options ...OutboxOptions) (*Outbox, error) {
 	opts := OutboxOptions{}
-	if len(options) >= 1 {
+	if len(options) > 0 {
 		if err := options[0].validate(); err != nil {
 			return nil, err
 		}

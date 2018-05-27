@@ -85,7 +85,7 @@ func newRetrieveOperation(c *Client, ident, direction string, o *RetrieveOptions
 // The file format will be "PDF" or "TIF" – defaults to account settings if FaxFormat not supplied in optional args.
 func (c *Client) RetrieveFax(ident, direction string, options ...RetrieveOptions) (*RetrieveResp, error) {
 	opts := RetrieveOptions{}
-	if len(options) >= 1 {
+	if len(options) > 0 {
 		opts = options[0]
 	}
 	if !(direction == inbound || direction == outbound) {

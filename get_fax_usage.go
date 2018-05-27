@@ -74,7 +74,7 @@ func newFaxUsageOperation(c *Client, opts *FaxUsageOptions) *faxUsageOperation {
 // GetFaxUsage reports usage for a specified user and period.
 func (c *Client) GetFaxUsage(options ...FaxUsageOptions) (*FaxUsage, error) {
 	opts := FaxUsageOptions{}
-	if len(options) >= 1 {
+	if len(options) > 0 {
 		if err := options[0].validate(); err != nil {
 			return nil, err
 		}

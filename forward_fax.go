@@ -143,7 +143,7 @@ func (c *Client) ForwardFax(cfg ForwardCfg, options ...ForwardOptions) (*Forward
 		return nil, err
 	}
 	opts := ForwardOptions{}
-	if len(options) >= 1 {
+	if len(options) > 0 {
 		if err := options[0].validate(); err != nil {
 			return nil, err
 		}
