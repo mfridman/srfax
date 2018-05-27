@@ -8,6 +8,24 @@ import (
 
 // MulFaxStatus represents the status of multiple sent faxes.
 type MulFaxStatus struct {
+	Status string
+	Result []struct {
+		Pages       string
+		EpochTime   string
+		Duration    string
+		Size        string
+		FileName    string
+		SentStatus  string
+		DateQueued  string
+		DateSent    string
+		ToFaxNumber string
+		RemoteID    string
+		ErrorCode   string
+		AccountCode string
+	}
+}
+
+type mappedMulFaxStatus struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
 		Pages string `mapstructure:"Pages"` // API returns empty string when there is an error
@@ -36,8 +54,7 @@ type mulFaxStatusOperation struct {
 }
 
 func newMulFaxUsageOperation(c *Client, ids []string) *mulFaxStatusOperation {
-	s := strings.Join(ids, "|")
-	return &mulFaxStatusOperation{Action: actionGetMulFaxStatus, Client: *c, IDs: s}
+	return &mulFaxStatusOperation{Action: actionGetMulFaxStatus, Client: *c, IDs: strings.Join(ids, "|")}
 }
 
 // GetMulFaxStatus retrieves status of multiple sent faxes. Works only with outbound faxes.
@@ -47,10 +64,17 @@ func (c *Client) GetMulFaxStatus(ids []string) (*MulFaxStatus, error) {
 	if len(ids) == 0 {
 		return nil, errors.New("must supply one or more identifiers")
 	}
-	resp := MulFaxStatus{}
-	opr := newMulFaxUsageOperation(c, ids)
-	if err := run(opr, &resp); err != nil {
+
+	operation, err := constructFromStruct(newMulFaxUsageOperation(c, ids))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to construct a reader from newMulFaxUsageOperation")
+	}
+
+	result := mappedMulFaxStatus{}
+	if err := run(operation, &result); err != nil {
 		return nil, err
 	}
-	return &resp, nil
+
+	out := MulFaxStatus(result)
+	return &out, nil
 }

@@ -6,6 +6,11 @@ import (
 
 // ViewedStatus is the response from a UpdateViewedStatus operation.
 type ViewedStatus struct {
+	Status string
+	Result string
+}
+
+type mappedViewedStatus struct {
 	Status string `mapstructure:"Status"`
 	Result string `mapstructure:"Result"`
 }
@@ -55,10 +60,17 @@ func (c *Client) UpdateViewedStatus(cfg ViewedStatusCfg) (*ViewedStatus, error) 
 	if err := cfg.validate(); err != nil {
 		return nil, err
 	}
-	resp := ViewedStatus{}
-	op := newViewedStatusOperation(c, &cfg)
-	if err := run(op, &resp); err != nil {
+
+	operation, err := constructFromStruct(newViewedStatusOperation(c, &cfg))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to construct a reader for newViewedStatusOperation")
+	}
+
+	result := mappedViewedStatus{}
+	if err := run(operation, &result); err != nil {
 		return nil, err
 	}
-	return &resp, nil
+
+	out := ViewedStatus(result)
+	return &out, nil
 }

@@ -24,9 +24,14 @@ type RetrieveOptions struct {
 
 // RetrieveResp is the response from retrieving a fax.
 type RetrieveResp struct {
-	Status string `mapstructure:"Status"`
+	Status string
 
 	// If successful the Result field will contain Base64 encoded fax file contents
+	Result string
+}
+
+type mappedRetrieveResp struct {
+	Status string `mapstructure:"Status"`
 	Result string `mapstructure:"Result"`
 }
 
@@ -86,13 +91,22 @@ func (c *Client) RetrieveFax(ident, direction string, options ...RetrieveOptions
 	if !(direction == inbound || direction == outbound) {
 		return nil, errors.Errorf("Direction must be one of: %s or %s", inbound, outbound)
 	}
-	resp := RetrieveResp{}
-	op, err := newRetrieveOperation(c, ident, direction, &opts)
+
+	opr, err := newRetrieveOperation(c, ident, direction, &opts)
 	if err != nil {
+		return nil, errors.Wrap(err, "failed to build a newRetrieveOperation")
+	}
+
+	operation, err := constructFromStruct(opr)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to construct a reader for newRetrieveOperation")
+	}
+
+	result := mappedRetrieveResp{}
+	if err := run(operation, &result); err != nil {
 		return nil, err
 	}
-	if err := run(op, &resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
+
+	out := RetrieveResp(result)
+	return &out, nil
 }

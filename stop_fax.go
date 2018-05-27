@@ -6,6 +6,11 @@ import (
 
 // StopFaxResp is the response from a StopFax operation.
 type StopFaxResp struct {
+	Status string
+	Result string
+}
+
+type mappedStopFaxResp struct {
 	Status string `mapstructure:"Status"`
 	Result string `mapstructure:"Result"`
 }
@@ -27,10 +32,17 @@ func (c *Client) StopFax(id int) (*StopFaxResp, error) {
 	if id <= 0 {
 		return nil, errors.New("id cannot be zero or negative number")
 	}
-	resp := StopFaxResp{}
-	op := newStopFaxOperation(c, id)
-	if err := run(op, &resp); err != nil {
+
+	operation, err := constructFromStruct(newStopFaxOperation(c, id))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to construct a reader for newStopFaxOperation")
+	}
+
+	result := mappedStopFaxResp{}
+	if err := run(operation, &result); err != nil {
 		return nil, err
 	}
-	return &resp, nil
+
+	out := StopFaxResp(result)
+	return &out, nil
 }

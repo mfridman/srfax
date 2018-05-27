@@ -113,6 +113,11 @@ func (c *ForwardCfg) validate() error {
 
 // ForwardResp represents information about a forwarded fax.
 type ForwardResp struct {
+	Status string
+	Result string
+}
+
+type mappedForwardResp struct {
 	Status string `mapstructure:"Status"`
 	Result string `mapstructure:"Result"`
 }
@@ -144,10 +149,17 @@ func (c *Client) ForwardFax(cfg ForwardCfg, options ...ForwardOptions) (*Forward
 		}
 		opts = options[0]
 	}
-	opr := newForwardOperation(c, &cfg, &opts)
-	resp := ForwardResp{}
-	if err := run(opr, &resp); err != nil {
+
+	operation, err := constructFromStruct(newForwardOperation(c, &cfg, &opts))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to construct a reader from newForwardOperation")
+	}
+
+	result := mappedForwardResp{}
+	if err := run(operation, &result); err != nil {
 		return nil, err
 	}
-	return &resp, nil
+
+	out := ForwardResp(result)
+	return &out, nil
 }

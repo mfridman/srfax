@@ -2,8 +2,10 @@ package srfax
 
 import (
 	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -26,20 +28,15 @@ func (r *ResultError) Error() string { return fmt.Sprintf("%v: %v", r.Status, r.
 
 // sendPost is a wrapper around http.Post method.
 // Sends a JSON encoded request to SRFax and decodes the response body.
-func sendPost(req interface{}) (map[string]interface{}, error) {
+func sendPost(r io.Reader) (map[string]interface{}, error) {
 
 	client := http.Client{
 		Timeout: time.Duration(30 * time.Second),
 	}
 
-	by, err := json.Marshal(&req)
+	resp, err := client.Post(apiURL, "application/json", r)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to marshal request")
-	}
-
-	resp, err := client.Post(apiURL, "application/json", bytes.NewReader(by))
-	if err != nil {
-		return nil, errors.Wrap(err, "error with POST request")
+		return nil, errors.Wrap(err, "failed POST request")
 	}
 	defer resp.Body.Close()
 
@@ -49,15 +46,14 @@ func sendPost(req interface{}) (map[string]interface{}, error) {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Wrap(err, "error reading response body from POST")
+		return nil, errors.Wrap(err, "failed reading response body from POST")
 	}
 
 	// DEBUG only, show the raw body coming across the wire.
 	// fmt.Println("DEBUG RAW: ", string(b))
 
 	var ms map[string]interface{}
-	err = json.NewDecoder(bytes.NewReader(body)).Decode(&ms)
-	if err != nil {
+	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&ms); err != nil {
 		return nil, errors.Wrap(err, "failed decoding response from POST")
 	}
 
@@ -128,24 +124,24 @@ func IDFromName(s string) (int, error) {
 	return n, nil
 }
 
-// decodeResp decodes response map into the underlying response type (rt).
+// decodeMap decodes a map into the underlying result type.
 // It is a wrapper around Mitchell's mapstructure pkg.
-func decodeResp(resp map[string]interface{}, rt interface{}) error {
-	if err := checkStatus(resp); err != nil {
+func decodeMap(msi map[string]interface{}, resultType interface{}) error {
+	if err := checkStatus(msi); err != nil {
 		return err
 	}
 	var md mapstructure.Metadata
 	cfg := &mapstructure.DecoderConfig{
 		WeaklyTypedInput: true,
 		Metadata:         &md,
-		Result:           rt,
+		Result:           resultType, // this MUST be a pointer to a struct
 	}
 	decoder, err := mapstructure.NewDecoder(cfg)
 	if err != nil {
 		return errors.Wrapf(err, "mapstructure new decoder config error: [%+v]", cfg)
 	}
-	if err := decoder.Decode(resp); err != nil {
-		return errors.Wrapf(err, "mapstructure Decode error: [%+v]", resp)
+	if err := decoder.Decode(msi); err != nil {
+		return errors.Wrapf(err, "mapstructure Decode error: [%+v]", msi)
 	}
 	// DEBUG only
 	// fmt.Println("DEBUG unused keys: ", cfg.Metadata.Unused)
@@ -205,15 +201,30 @@ func isNChars(s string, length int) bool {
 	return true
 }
 
-func run(opr, resp interface{}) error {
-	msg, err := sendPost(opr)
+func run(r io.Reader, resultType interface{}) error {
+	msi, err := sendPost(r)
 	if err != nil {
-		return errors.Wrap(err, "sendPost error")
+		return errors.Wrap(err, "failed sendPost")
 	}
-
-	if err := decodeResp(msg, resp); err != nil {
-		return errors.Wrap(err, "decodeResp error")
+	if err := decodeMap(msi, resultType); err != nil {
+		return errors.Wrap(err, "failed decodeResp")
 	}
-
 	return nil
+}
+
+func constructFromMap(i interface{}) (io.Reader, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	if err := enc.Encode(i); err != nil {
+		return nil, errors.Wrap(err, "failed encode")
+	}
+	return bytes.NewReader(buf.Bytes()), nil
+}
+
+func constructFromStruct(i interface{}) (io.Reader, error) {
+	by, err := json.Marshal(i)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed json marshal")
+	}
+	return bytes.NewReader(by), nil
 }

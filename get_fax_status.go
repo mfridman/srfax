@@ -6,6 +6,24 @@ import (
 
 // FaxStatus represents the status of a single sent fax.
 type FaxStatus struct {
+	Status string
+	Result *struct {
+		FileName    string
+		SentStatus  string
+		DateQueued  string
+		DateSent    string
+		ToFaxNumber string
+		RemoteID    string
+		ErrorCode   string
+		AccountCode string
+		Pages       int
+		EpochTime   string
+		Duration    int
+		Size        int
+	}
+}
+
+type mappedFaxStatus struct {
 	Status string `mapstructure:"Status"`
 	Result *struct {
 		FileName    string `mapstructure:"FileName"`
@@ -40,10 +58,17 @@ func (c *Client) GetFaxStatus(id int) (*FaxStatus, error) {
 	if id <= 0 {
 		return nil, errors.New("id cannot be zero or negative number")
 	}
-	resp := FaxStatus{}
-	opr := newFaxStatusOperation(c, id)
-	if err := run(opr, &resp); err != nil {
+
+	operation, err := constructFromStruct(newFaxStatusOperation(c, id))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to construct a reader from newFaxStatusOperation")
+	}
+
+	result := mappedFaxStatus{}
+	if err := run(operation, &result); err != nil {
 		return nil, err
 	}
-	return &resp, nil
+
+	out := FaxStatus(result)
+	return &out, nil
 }

@@ -35,6 +35,19 @@ func (o *FaxUsageOptions) validate() error {
 
 // FaxUsage is the response from a GetFaxUsage operation.
 type FaxUsage struct {
+	Status string
+	Result []struct {
+		Period        string
+		ClientName    string
+		BillingNumber string
+		UserID        int
+		SubUserID     int
+		NumberOfFaxes int
+		NumberOfPages int
+	}
+}
+
+type mappedFaxUsage struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
 		Period        string `mapstructure:"Period"`
@@ -67,10 +80,17 @@ func (c *Client) GetFaxUsage(options ...FaxUsageOptions) (*FaxUsage, error) {
 		}
 		opts = options[0]
 	}
-	resp := FaxUsage{}
-	opr := newFaxUsageOperation(c, &opts)
-	if err := run(opr, &resp); err != nil {
+
+	operation, err := constructFromStruct(newFaxUsageOperation(c, &opts))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to construct a reader from newFaxUsageOperation")
+	}
+
+	result := mappedFaxUsage{}
+	if err := run(operation, &result); err != nil {
 		return nil, err
 	}
-	return &resp, nil
+
+	out := FaxUsage(result)
+	return &out, nil
 }

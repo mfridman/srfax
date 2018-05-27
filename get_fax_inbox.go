@@ -31,7 +31,7 @@ func (o *InboxOptions) validate() error {
 	}
 
 	if o.IncludeSubUsers != "" && o.IncludeSubUsers != yes {
-		return errors.Errorf(`IncludeSubUsers must be blank or set to "%s"`, yes)
+		return errors.Errorf("IncludeSubUsers must be omitted or set to %q", yes)
 	}
 
 	if o.ViewedStatus != "" {
@@ -39,15 +39,15 @@ func (o *InboxOptions) validate() error {
 		case "UNREAD", "READ", "ALL":
 			break
 		default:
-			return errors.New("ViewedStatus must be blank or one of READ|UNREAD|ALL")
+			return errors.New("ViewedStatus must be blank or one of READ, UNREAD or ALL")
 		}
 	}
 
 	return nil
 }
 
-// Inbox represents fax inbox information.
-type Inbox struct {
+// mappedInbox represents an internal mapstructure inbox
+type mappedInbox struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
 		FileName      string `mapstructure:"FileName"`
@@ -64,6 +64,24 @@ type Inbox struct {
 	} `mapstructure:"Result"`
 }
 
+// Inbox represents fax inbox information.
+type Inbox struct {
+	Status string
+	Result []struct {
+		FileName      string
+		ReceiveStatus string
+		Date          string
+		CallerID      string
+		RemoteID      string
+		ViewedStatus  string
+		UserID        string
+		UserFaxNumber string
+		EpochTime     int
+		Pages         int
+		Size          int
+	}
+}
+
 // inboxOperation defines the POST variables for a GetFaxInbox operation.
 type inboxOperation struct {
 	Action string `json:"action"`
@@ -75,8 +93,7 @@ func newInboxOperation(c *Client, o *InboxOptions) *inboxOperation {
 	return &inboxOperation{Action: actionGetFaxInbox, Client: *c, InboxOptions: *o}
 }
 
-// GetFaxInbox retrieves a list of faxes received for a specified period of time.
-func (c *Client) GetFaxInbox(options ...InboxOptions) (*Inbox, error) {
+func newInboxOptions(options ...InboxOptions) (*InboxOptions, error) {
 	opts := InboxOptions{}
 	if len(options) >= 1 {
 		if err := options[0].validate(); err != nil {
@@ -84,10 +101,26 @@ func (c *Client) GetFaxInbox(options ...InboxOptions) (*Inbox, error) {
 		}
 		opts = options[0]
 	}
-	resp := Inbox{}
-	opr := newInboxOperation(c, &opts)
-	if err := run(opr, &resp); err != nil {
+	return &opts, nil
+}
+
+// GetFaxInbox retrieves a list of faxes received for a specified period of time.
+func (c *Client) GetFaxInbox(options ...InboxOptions) (*Inbox, error) {
+	opts, err := newInboxOptions(options...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed options")
+	}
+
+	operation, err := constructFromStruct(newInboxOperation(c, opts))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to construct a reader from newInboxOperation")
+	}
+
+	result := mappedInbox{}
+	if err := run(operation, &result); err != nil {
 		return nil, err
 	}
-	return &resp, nil
+
+	out := Inbox(result)
+	return &out, nil
 }

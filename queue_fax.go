@@ -61,6 +61,11 @@ type File struct {
 
 // QueueFaxResp represents information about faxes added to the queue.
 type QueueFaxResp struct {
+	Status string
+	Result string
+}
+
+type mappedQueueFaxResp struct {
 	Status string `mapstructure:"Status"`
 	Result string `mapstructure:"Result"`
 }
@@ -143,11 +148,18 @@ func (c *Client) QueueFax(files []File, cfg QueueCfg, options ...QueueOptions) (
 		}
 	}
 
-	resp := QueueFaxResp{}
-	if err := run(opr, &resp); err != nil {
+	operation, err := constructFromMap(opr)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to construct a reader for queue fax")
+	}
+
+	result := mappedQueueFaxResp{}
+	if err := run(operation, &result); err != nil {
 		return nil, err
 	}
-	return &resp, nil
+
+	out := QueueFaxResp(result)
+	return &out, nil
 }
 
 // failIfEmpty takes a map to check if a value is zero-value (string and int). If a value is empty
@@ -155,14 +167,14 @@ func (c *Client) QueueFax(files []File, cfg QueueCfg, options ...QueueOptions) (
 //
 // Convenience func to fail early if a mandatory field(s) empty.
 func failIfEmpty(m map[string]interface{}) error {
-	em := make([]string, 0)
+	errs := make([]string, 0)
 	for k, v := range m {
 		if v == "" || v == 0 {
-			em = append(em, k)
+			errs = append(errs, k)
 		}
 	}
-	if len(em) != 0 {
-		return errors.Errorf("check QueueCfg, the following fields cannot be empty: %s", strings.Join(em, ", "))
+	if len(errs) != 0 {
+		return errors.Errorf("check QueueCfg, the following fields cannot be empty: %s", strings.Join(errs, ", "))
 	}
 	return nil
 }

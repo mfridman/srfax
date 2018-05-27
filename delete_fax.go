@@ -9,9 +9,25 @@ import (
 
 // DeleteResp is the response from a DeleteFax operation.
 type DeleteResp struct {
+	Status string
+	Result string
+}
+
+// mappedDeleteResp represents an internal mapstructure of a delete response
+type mappedDeleteResp struct {
 	Status string `mapstructure:"Status"`
 	Result string `mapstructure:"Result"`
 }
+
+// TODO: remove this if this construct works in helpers.go
+// func newDeleteOperation(m map[string]interface{}) (io.Reader, error) {
+// 	var buf bytes.Buffer
+// 	enc := gob.NewEncoder(&buf)
+// 	if err := enc.Encode(m); err != nil {
+// 		return nil, errors.Wrap(err, "failed to construct newInboxOperation due to encoding")
+// 	}
+// 	return bytes.NewReader(buf.Bytes()), nil
+// }
 
 // DeleteFax deletes one or more received or sent faxes for a given direction.
 //
@@ -45,9 +61,17 @@ func (c *Client) DeleteFax(ids []string, direction string) (*DeleteResp, error) 
 			opr[prefixID+strconv.Itoa(i)] = j
 		}
 	}
-	resp := DeleteResp{}
-	if err := run(opr, &resp); err != nil {
+
+	operation, err := constructFromMap(opr)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to construct a reader for delete fax")
+	}
+
+	result := mappedDeleteResp{}
+	if err := run(operation, &result); err != nil {
 		return nil, err
 	}
-	return &resp, nil
+
+	out := DeleteResp(result)
+	return &out, nil
 }

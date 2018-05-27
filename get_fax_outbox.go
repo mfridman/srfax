@@ -33,6 +33,27 @@ func (o *OutboxOptions) validate() error {
 
 // Outbox represents fax outbox information.
 type Outbox struct {
+	Status string
+	Result []struct {
+		FileName      string
+		SentStatus    string
+		DateQueued    string
+		DateSent      string
+		EpochTime     string
+		ToFaxNumber   string
+		RemoteID      string
+		ErrorCode     string
+		AccountCode   string
+		Subject       string
+		UserID        string
+		UserFaxNumber string
+		Pages         int
+		Duration      int
+		Size          int
+	}
+}
+
+type mappedOutbox struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
 		FileName      string `mapstructure:"FileName"`
@@ -73,10 +94,17 @@ func (c *Client) GetFaxOutbox(options ...OutboxOptions) (*Outbox, error) {
 		}
 		opts = options[0]
 	}
-	resp := Outbox{}
-	opr := newOutboxOperation(c, &opts)
-	if err := run(opr, &resp); err != nil {
+
+	operation, err := constructFromStruct(newOutboxOperation(c, &opts))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to construct a reader from newOutboxOperation")
+	}
+
+	result := mappedOutbox{}
+	if err := run(operation, &result); err != nil {
 		return nil, err
 	}
-	return &resp, nil
+
+	out := Outbox(result)
+	return &out, nil
 }
