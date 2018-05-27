@@ -56,8 +56,8 @@ type mappedInbox struct {
 		CallerID      string `mapstructure:"CallerID"`
 		RemoteID      string `mapstructure:"RemoteID"`
 		ViewedStatus  string `mapstructure:"ViewedStatus"`
-		UserID        string `mapstructure:"User_ID" json:",omitempty"`
-		UserFaxNumber string `mapstructure:"User_FaxNumber" json:",omitempty"`
+		UserID        string `mapstructure:"User_ID,omitempty"`
+		UserFaxNumber string `mapstructure:"User_FaxNumber,omitempty"`
 		EpochTime     int    `mapstructure:"EpochTime"`
 		Pages         int    `mapstructure:"Pages"`
 		Size          int    `mapstructure:"Size"`
