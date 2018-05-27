@@ -156,7 +156,7 @@ func (c *Client) ForwardFax(cfg ForwardCfg, options ...ForwardOptions) (*Forward
 	}
 
 	result := mappedForwardResp{}
-	if err := run(operation, &result); err != nil {
+	if err := run(operation, &result, c.url); err != nil {
 		return nil, err
 	}
 

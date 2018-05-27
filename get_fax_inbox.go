@@ -119,7 +119,7 @@ func (c *Client) GetFaxInbox(options ...InboxOptions) (*Inbox, error) {
 	}
 
 	result := mappedInbox{}
-	if err := run(operation, &result); err != nil {
+	if err := run(operation, &result, c.url); err != nil {
 		return nil, err
 	}
 

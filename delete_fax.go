@@ -68,7 +68,7 @@ func (c *Client) DeleteFax(ids []string, direction string) (*DeleteResp, error) 
 	}
 
 	result := mappedDeleteResp{}
-	if err := run(operation, &result); err != nil {
+	if err := run(operation, &result, c.url); err != nil {
 		return nil, err
 	}
 

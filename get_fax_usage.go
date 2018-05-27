@@ -87,7 +87,7 @@ func (c *Client) GetFaxUsage(options ...FaxUsageOptions) (*FaxUsage, error) {
 	}
 
 	result := mappedFaxUsage{}
-	if err := run(operation, &result); err != nil {
+	if err := run(operation, &result, c.url); err != nil {
 		return nil, err
 	}
 

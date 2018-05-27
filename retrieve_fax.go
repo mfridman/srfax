@@ -103,7 +103,7 @@ func (c *Client) RetrieveFax(ident, direction string, options ...RetrieveOptions
 	}
 
 	result := mappedRetrieveResp{}
-	if err := run(operation, &result); err != nil {
+	if err := run(operation, &result, c.url); err != nil {
 		return nil, err
 	}
 

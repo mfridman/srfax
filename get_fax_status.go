@@ -65,7 +65,7 @@ func (c *Client) GetFaxStatus(id int) (*FaxStatus, error) {
 	}
 
 	result := mappedFaxStatus{}
-	if err := run(operation, &result); err != nil {
+	if err := run(operation, &result, c.url); err != nil {
 		return nil, err
 	}
 

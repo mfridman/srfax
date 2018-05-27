@@ -32,12 +32,17 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 	if err := cfg.validate(); err != nil {
 		return nil, err
 	}
-	return &Client{account{AccessID: cfg.ID, AccessPwd: cfg.Pwd}}, nil
+
+	// apiURL is the SRFax API url.
+	apiURL := "https://www.srfax.com/SRF_SecWebSvc.php"
+
+	return &Client{account{AccessID: cfg.ID, AccessPwd: cfg.Pwd}, apiURL}, nil
 }
 
 // Client is an SRFax client.
 type Client struct {
 	account
+	url string
 }
 
 type account struct {

@@ -67,7 +67,7 @@ func (c *Client) UpdateViewedStatus(cfg ViewedStatusCfg) (*ViewedStatus, error) 
 	}
 
 	result := mappedViewedStatus{}
-	if err := run(operation, &result); err != nil {
+	if err := run(operation, &result, c.url); err != nil {
 		return nil, err
 	}
 

@@ -101,7 +101,7 @@ func (c *Client) GetFaxOutbox(options ...OutboxOptions) (*Outbox, error) {
 	}
 
 	result := mappedOutbox{}
-	if err := run(operation, &result); err != nil {
+	if err := run(operation, &result, c.url); err != nil {
 		return nil, err
 	}
 

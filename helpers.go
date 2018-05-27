@@ -28,13 +28,13 @@ func (r *ResultError) Error() string { return fmt.Sprintf("%v: %v", r.Status, r.
 
 // sendPost is a wrapper around http.Post method.
 // Sends a JSON encoded request to SRFax and decodes the response body.
-func sendPost(r io.Reader) (map[string]interface{}, error) {
+func sendPost(r io.Reader, url string) (map[string]interface{}, error) {
 
 	client := http.Client{
 		Timeout: time.Duration(30 * time.Second),
 	}
 
-	resp, err := client.Post(apiURL, "application/json", r)
+	resp, err := client.Post(url, "application/json", r)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed POST request")
 	}
@@ -201,8 +201,8 @@ func isNChars(s string, length int) bool {
 	return true
 }
 
-func run(r io.Reader, resultType interface{}) error {
-	msi, err := sendPost(r)
+func run(r io.Reader, resultType interface{}, url string) error {
+	msi, err := sendPost(r, url)
 	if err != nil {
 		return errors.Wrap(err, "failed sendPost")
 	}
