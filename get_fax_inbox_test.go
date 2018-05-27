@@ -16,7 +16,7 @@ func TestNewInboxOperation(t *testing.T) {
 			o    *InboxOptions
 			want map[string]interface{}
 		}{
-			&Client{account{925, "abc"}}, &InboxOptions{}, map[string]interface{}{
+			&Client{account{925, "abc"}, ""}, &InboxOptions{}, map[string]interface{}{
 				"action": "Get_Fax_Inbox", "access_id": 925, "access_pwd": "abc"},
 		}
 
@@ -55,7 +55,7 @@ func TestNewInboxOperation(t *testing.T) {
 			o    *InboxOptions
 			want map[string]interface{}
 		}{
-			&Client{account{925, "abc"}}, &InboxOptions{ViewedStatus: "Y"}, map[string]interface{}{
+			&Client{account{925, "abc"}, ""}, &InboxOptions{ViewedStatus: "Y"}, map[string]interface{}{
 				"action": "Get_Fax_Inbox", "access_id": 925, "access_pwd": "abc", "sViewedStatus": "Y"},
 		}
 
