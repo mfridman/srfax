@@ -1,20 +1,26 @@
 package srfax
 
-import (
-	"github.com/pkg/errors"
-)
+import "github.com/pkg/errors"
 
 // InboxOptions specify optional arguments when retrieving inbox items.
 type InboxOptions struct {
-	Period          string `json:"sPeriod,omitempty"`
-	StartDate       string `json:"sStartDate,omitempty"`
-	EndDate         string `json:"sEndDate,omitempty"`
-	ViewedStatus    string `json:"sViewedStatus,omitempty"`
+	// ALL or RANGE if not provided defaults to ALL
+	Period string `json:"sPeriod,omitempty"`
+
+	// Only required if RANGE is specified in sPeriod – date format must be YYYYMMDD
+	StartDate string `json:"sStartDate,omitempty"`
+	EndDate   string `json:"sEndDate,omitempty"`
+
+	// ALL – Show all faxes irrespective of Viewed Status (DEFAULT)
+	// UNREAD – Only show faxes that have not been read
+	// READ – Only show faxes that have been read
+	ViewedStatus string `json:"sViewedStatus,omitempty"`
+
+	// Set to Y if you want to include faxes received by a sub user of the account as well
 	IncludeSubUsers string `json:"sIncludeSubUsers,omitempty"`
 }
 
 func (o *InboxOptions) validate() error {
-
 	if o.Period != "" {
 		switch o.Period {
 		case "RANGE":
@@ -23,17 +29,15 @@ func (o *InboxOptions) validate() error {
 			}
 		case "ALL":
 			if o.StartDate != "" || o.EndDate != "" {
-				return errors.New("StartDate and EndDate are not required when Period set to ALL")
+				return errors.New("StartDate and/or EndDate not required when setting Period to ALL")
 			}
 		default:
-			return errors.New("Period must be ALL|RANGE")
+			return errors.New("Period can be blank or one of ALL, RANGE. If not provided defaults to ALL")
 		}
 	}
-
 	if o.IncludeSubUsers != "" && o.IncludeSubUsers != yes {
 		return errors.Errorf("IncludeSubUsers must be omitted or set to %q", yes)
 	}
-
 	if o.ViewedStatus != "" {
 		switch o.ViewedStatus {
 		case "UNREAD", "READ", "ALL":
@@ -42,11 +46,9 @@ func (o *InboxOptions) validate() error {
 			return errors.New("ViewedStatus must be blank or one of READ, UNREAD or ALL")
 		}
 	}
-
 	return nil
 }
 
-// mappedInbox represents an internal mapstructure inbox
 type mappedInbox struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
@@ -95,7 +97,7 @@ func newInboxOperation(c *Client, o *InboxOptions) *inboxOperation {
 
 func newInboxOptions(options ...InboxOptions) (*InboxOptions, error) {
 	opts := InboxOptions{}
-	if len(options) >= 1 {
+	if len(options) > 0 {
 		if err := options[0].validate(); err != nil {
 			return nil, err
 		}
@@ -113,7 +115,7 @@ func (c *Client) GetFaxInbox(options ...InboxOptions) (*Inbox, error) {
 
 	operation, err := constructFromStruct(newInboxOperation(c, opts))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to construct a reader from newInboxOperation")
+		return nil, errors.Wrap(err, "failed to construct a reader from newInboxOperation struct")
 	}
 
 	result := mappedInbox{}
