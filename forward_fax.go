@@ -9,16 +9,31 @@ import (
 
 // ForwardOptions specify optional arguments when forwarding a fax.
 type ForwardOptions struct {
-	SubUserID     int    `json:"sSubUserID,omitempty"`
-	AccountCode   string `json:"sAccountCode,omitempty"`
-	Retries       int    `json:"sRetries,omitempty"`
+	// The account number of a sub account, if you want to use a master account to
+	// download a sub account’s fax
+	SubUserID int `json:"sSubUserID,omitempty"`
+
+	// Internal Reference Number (Maximum of 20 characters)
+	AccountCode string `json:"sAccountCode,omitempty"`
+
+	// Number of times the system is to retry a number if busy or an error is
+	// encountered – number from 0 to 6
+	Retries int `json:"sRetries,omitempty"`
+
+	// From: On the Fax Header Line(Maximum of 30 characters)
 	FaxFromHeader string `json:"sFaxFromHeader,omitempty"`
-	NotifyURL     string `json:"sNotifyURL,omitempty"`
 
-	// YYYY-MM-DD
+	// Provide an absolute URL (beginning with http:// or https://) and the SRFax
+	// system will POST back the fax status record when the fax completes. See docs
+	// for more details: https://www.srfax.com/api-page/forward_fax/
+	NotifyURL string `json:"sNotifyURL,omitempty"`
+
+	// The date you want to schedule a future fax for.
+	// Must be in the format YYYY-MM-DD. Required if using QueueFaxTime
 	QueueFaxDate string `json:"sQueueFaxDate,omitempty"`
-
-	// HH:MM, using 24 hour time
+	// The time you want to schedule a future fax for. Must be in the format HH:MM,
+	// using 24 hour time (ie, 00:00 – 23:59). Required if using QueueFaxDate.
+	// The timezone set on the account will be used when scheduling.
 	QueueFaxTime string `json:"sQueueFaxTime,omitempty"`
 }
 
@@ -30,8 +45,9 @@ func (o *ForwardOptions) validate() error {
 		return errors.New("FaxFromHeader must be a maximum of 30 characters")
 	}
 	if o.NotifyURL != "" {
-		if !strings.HasPrefix(o.NotifyURL, "http://") && !strings.HasPrefix(o.NotifyURL, "https://") {
-			return errors.New(`NotifyURL must have prefix "http://" or "https://"`)
+		http, https := "http://", "https://"
+		if !strings.HasPrefix(o.NotifyURL, http) && !strings.HasPrefix(o.NotifyURL, https) {
+			return errors.Errorf("NotifyURL must have prefix %q or %q", http, https)
 		}
 	}
 	if o.Retries > 6 || o.Retries < 0 {
@@ -55,22 +71,25 @@ func (o *ForwardOptions) validate() error {
 // ForwardCfg specifies mandatory arguments when forwarding a fax.
 type ForwardCfg struct {
 	// Either FaxFileName or FaxDetailsID must be supplied
+	//
+	// FaxDetailsID of the fax – the ID is located after the "|" (pipe) character
+	// of the FaxFileName
 	FaxDetailsID string `json:"sFaxDetailsID,omitempty"`
-	FaxFileName  string `json:"sFaxFileName,omitempty"`
+	// FaxFileName returned from Get_Fax_Inbox or Get_Fax_Outbox
+	FaxFileName string `json:"sFaxFileName,omitempty"`
 
-	// "IN" or "OUT" for inbound or outbound
+	// IN or OUT for inbound or outbound
 	Direction string `json:"sDirection"`
 
-	// sender's fax number (must be 10 digits)
+	// Sender fax number (must be 10 digits)
 	CallerID int `json:"sCallerID"`
 
-	// sender's email address
+	// Sender email address
 	SenderEmail string `json:"sSenderEmail"`
 
-	// "SINGLE" or "BROADCAST"
+	// SINGLE when sending to one number; BROADCAST when sending to multiple numbers
 	FaxType string `json:"sFaxType"`
-
-	// slice of string where each string must be an 11 digit number
+	// Slice of string representing an 11 digit fax number
 	ToFaxNumber []string `json:"-"`
 }
 

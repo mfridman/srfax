@@ -19,15 +19,15 @@ type mappedViewedStatus struct {
 type ViewedStatusCfg struct {
 	// Either the FaxFileName or the FaxDetailsID must be supplied
 	//
-	// When passing FaxFileName, the entire name (including pipe and ID) must be supplied.
-	// E.g., 20170101230101-1212-21_7|12124720
+	// When passing FaxFileName, the entire name (including pipe and ID)
+	// must be supplied. E.g., 20170101230101-1212-21_7|12124720
 	FaxDetailsID int    `json:"sFaxDetailsID,omitempty"`
 	FaxFileName  string `json:"sFaxFileName,omitempty"`
 
-	// "IN" or "OUT" for inbound or outbound fax
+	// IN or OUT for inbound or outbound fax
 	Direction string `json:"sDirection"`
 
-	// "Y" marks fax READ, "N" marks fax UNREAD
+	// Y marks fax READ, N marks fax UNREAD
 	MarkAsViewed string `json:"sMarkasViewed"`
 }
 

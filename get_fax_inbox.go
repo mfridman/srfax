@@ -16,7 +16,7 @@ type InboxOptions struct {
 	// READ – Only show faxes that have been read
 	ViewedStatus string `json:"sViewedStatus,omitempty"`
 
-	// Set to Y if you want to include faxes received by a sub user of the account as well
+	// Set to Y to include faxes received by a sub user of the account as well
 	IncludeSubUsers string `json:"sIncludeSubUsers,omitempty"`
 }
 

@@ -6,9 +6,14 @@ import (
 
 // FaxUsageOptions specify optional arguments to modify fax usage report.
 type FaxUsageOptions struct {
-	Period          string `json:"sPeriod,omitempty"`
-	StartDate       string `json:"sStartDate,omitempty"`
-	EndDate         string `json:"sEndDate,omitempty"`
+	// ALL or RANGE – if not provided defaults to ALL
+	Period string `json:"sPeriod,omitempty"`
+
+	// Only required if RANGE is specified in sPeriod – date format must be YYYYMMDD
+	StartDate string `json:"sStartDate,omitempty"`
+	EndDate   string `json:"sEndDate,omitempty"`
+
+	// Set to Y to include faxes received by a sub user of the account as well
 	IncludeSubUsers string `json:"sIncludeSubUsers,omitempty"`
 }
 
@@ -28,7 +33,7 @@ func (o *FaxUsageOptions) validate() error {
 		}
 	}
 	if o.IncludeSubUsers != "" && o.IncludeSubUsers != yes {
-		return errors.Errorf(`IncludeSubUsers must be blank or set to "%s"`, yes)
+		return errors.Errorf("IncludeSubUsers must be blank or set to %q", yes)
 	}
 	return nil
 }

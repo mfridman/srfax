@@ -50,7 +50,8 @@ func sendPost(r io.Reader, url string) (map[string]interface{}, error) {
 	}
 
 	// DEBUG only, show the raw body coming across the wire.
-	// fmt.Println("DEBUG RAW: ", string(b))
+	// fmt.Println("HEADER: ", resp.Header)
+	// fmt.Println("DEBUG RAW: ", string(body))
 
 	var ms map[string]interface{}
 	if err := json.NewDecoder(bytes.NewReader(body)).Decode(&ms); err != nil {
@@ -77,12 +78,12 @@ func checkStatus(ms map[string]interface{}) error {
 	}
 	status, ok := ms["Status"].(string)
 	if !ok {
-		return &ResultError{Status: "", Raw: fmt.Sprintf(`failed "Status" type assertion; expecting String but got %T`, ms["Status"])}
+		return &ResultError{Status: "", Raw: fmt.Sprintf("failed Status type assertion; expecting type string from map[string]interface{} but got %T", ms["Status"])}
 	}
 	if strings.ToLower(status) != "success" {
 		result, ok := ms["Result"].(string)
 		if !ok {
-			return &ResultError{Status: "", Raw: fmt.Sprintf(`failed "Result" type assertion; expecting String but got %T`, ms["Status"])}
+			return &ResultError{Status: "", Raw: fmt.Sprintf("failed Result type assertion; expecting type string from map[string]interface{} but got %T", ms["Status"])}
 		}
 		return &ResultError{Status: status, Raw: result}
 	}

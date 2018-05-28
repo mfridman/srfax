@@ -19,19 +19,9 @@ type mappedDeleteResp struct {
 	Result string `mapstructure:"Result"`
 }
 
-// TODO: remove this if this construct works in helpers.go
-// func newDeleteOperation(m map[string]interface{}) (io.Reader, error) {
-// 	var buf bytes.Buffer
-// 	enc := gob.NewEncoder(&buf)
-// 	if err := enc.Encode(m); err != nil {
-// 		return nil, errors.Wrap(err, "failed to construct newInboxOperation due to encoding")
-// 	}
-// 	return bytes.NewReader(buf.Bytes()), nil
-// }
-
 // DeleteFax deletes one or more received or sent faxes for a given direction.
 //
-// direction must be one of "IN" or "OUT" for inbound or outbound.
+// direction must be one of IN or OUT for inbound or outbound.
 //
 // ids is a slice of fax identifiers to delete based on FaxFileName or FaxDetailsID.
 // These are unique identifiers returned from a GetFaxOutbox or GetFaxInbox operation.
@@ -39,7 +29,7 @@ type mappedDeleteResp struct {
 // safe to mix filenames with IDs: []string{"20170721124555-1213-4_0|272568938", "172568938"}
 func (c *Client) DeleteFax(ids []string, direction string) (*DeleteResp, error) {
 	if !(direction == inbound || direction == outbound) {
-		return nil, errors.Errorf(`direction must be one of either "%s" or "%s"`, inbound, outbound)
+		return nil, errors.Errorf("direction must be one of either %q or %q", inbound, outbound)
 	}
 	if len(ids) <= 0 {
 		return nil, errors.New("must supply one or more identifiers when deleting faxes")

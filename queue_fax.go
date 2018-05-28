@@ -11,30 +11,50 @@ import (
 // QueueOptions specify optional arguments when sending faxes.
 //
 // If the default cover page on the account is set to "Attachments ONLY" the cover page will
-// not be created irrespective of this variable
-// If a cover page is not provided then all cover page variables will be ignored
-//
-// "Basic", "Standard", "Company", or "Personal"
+// not be created irrespective of the CoverPage variable.
+// If CoverPage is not provided all cover page variables are ignored
+// For more info see docs: https://www.srfax.com/api-page/queue_fax/
 //
 // json tag used for reflection.
 type QueueOptions struct {
-	Retries       int    `json:"sRetries"`
-	AccountCode   string `json:"sAccountCode"`
+	// Number of times the system is to retry a number if busy or
+	// an error is encountered. Must be a number from 0 to 6
+	Retries int `json:"sRetries"`
+
+	// Internal Reference Number (Maximum of 20 characters)
+	AccountCode string `json:"sAccountCode"`
+
+	// From: On the Fax Header Line(Maximum of 30 characters)
 	FaxFromHeader string `json:"sFaxFromHeader"`
 
-	// cover page
-	CoverPage      string `json:"sCoverPage"`
-	CPFromName     string `json:"sCPFromName"`
-	CPToName       string `json:"sCPToName"`
+	// COVER PAGE OPTIONS
+	//
+	// To use one of the cover pages on file, specify the cover page you wish to use:
+	// Basic, Standard, Company, or Personal
+	CoverPage string `json:"sCoverPage"`
+	// Sender name on the Cover Page
+	CPFromName string `json:"sCPFromName"`
+	// Recipient name on the Cover Page
+	CPToName string `json:"sCPToName"`
+	// Organiation on the Cover Page
 	CPOrganization string `json:"sCPOrganization"`
-	CPSubject      string `json:"sCPSubject"`
-	CPComments     string `json:"sCPComments"`
+	// Subject Line on the Cover Page
+	// The subject line details are saved in the fax record even is a cover page is
+	// not requested – so the subject can be used for filtering / searching
+	CPSubject string `json:"sCPSubject"`
+	// Comments placed in the body of the Cover Page
+	CPComments string `json:"sCPComments"`
 
+	// Provide an absolute URL (prefixed with http:// or https://) and the SRFax
+	// system will POST back the fax status record when the fax completes.
 	NotifyURL string `json:"sNotifyURL"`
 
-	// YYYY-MM-DD
+	// The date you want to schedule a future fax for.
+	// Must be in the format YYYY-MM-DD. Required if using QueueFaxTime
 	QueueFaxDate string `json:"sQueueFaxDate"`
-	// HH:MM, using 24 hour time
+	// The time you want to schedule a future fax for. Must be in the format HH:MM,
+	// using 24 hour time (ie, 00:00 – 23:59). Required if using QueueFaxDate.
+	// The timezone set on the account will be used when scheduling.
 	QueueFaxTime string `json:"sQueueFaxTime"`
 }
 
@@ -43,19 +63,27 @@ type QueueOptions struct {
 // If sending to a single number use SINGLE and pass in a slice of len 1.
 // Otherwise use BROADCAST and pass in a slice of numbers (as string)
 type QueueCfg struct {
-	CallerID    int      // sender's fax number (must be 10 digits)
-	SenderEmail string   // sender's email address
-	FaxType     string   // "SINGLE" or "BROADCAST"
-	ToFaxNumber []string // each number must be 11 digits represented as a String
+	// Sender fax number (must be 10 digits)
+	CallerID int
+
+	// Sender email address
+	SenderEmail string
+
+	// SINGLE when sending to one number; BROADCAST when sending to multiple numbers
+	FaxType string
+
+	// Slice of string representing an 11 digit fax number
+	ToFaxNumber []string
 }
 
 // File represents a queueable fax item.
 // It is the callers responsibility to ensure that Content is base64-encoded.
+// Check the FAQs to see a list of supported file types: https://www.srfax.com/api-page/queue_fax/
 type File struct {
-	// filename
+	// Valid File Name
 	Name string
 
-	// base64-encoded string
+	// Base64 encoding of file contents
 	Content string
 }
 
@@ -98,7 +126,7 @@ func (c *Client) QueueFax(files []File, cfg QueueCfg, options ...QueueOptions) (
 
 	// build up optional, non-empty, options based on srfax tags through reflection.
 	// TODO this may not be the best approach. Hard to test.
-	// Think about writing a function to parse optional args, build a map and merge with existing operation map.
+	// Think about writing a function to parse optional args, build a map and merge with existing opr map from above.
 	if len(options) > 0 {
 		v := reflect.ValueOf(options[0])
 

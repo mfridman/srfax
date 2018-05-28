@@ -28,11 +28,8 @@ type MulFaxStatus struct {
 type mappedMulFaxStatus struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
-		Pages string `mapstructure:"Pages"` // API returns empty string when there is an error
-		// TODO this comes across as an error regardless
-		// decoding resp body: mapstructure: cannot unmarshal string into Go struct field .EpochTime of type int
-		// decoding resp body: mapstructure: cannot unmarshal number into Go struct field .EpochTime of type string
-		EpochTime   string `mapstructure:"EpochTime"` // API returns empty string when there is an error
+		Pages       string `mapstructure:"Pages"`
+		EpochTime   string `mapstructure:"EpochTime"`
 		Duration    string `mapstructure:"Duration"`
 		Size        string `mapstructure:"Size"`
 		FileName    string `mapstructure:"FileName"`

@@ -14,11 +14,11 @@ type RetrieveOptions struct {
 	// if you want to use a master account to download a sub account’s fax
 	SubUserID string `json:"sSubUserID,omitempty"`
 
-	// "PDF" or "TIFF", defaults to account settings if not supplied
+	// PDF or TIFF, defaults to account settings if not supplied
 	FaxFormat string `json:"sFaxFormat,omitempty"`
 
-	// "Y" mark fax as viewed once method completes successfully.
-	// "N" leave viewed status as is (default)
+	// Y mark fax as viewed once method completes successfully.
+	// N leave viewed status as is (default)
 	MarkAsViewed string `json:"sMarkasViewed,omitempty"`
 }
 
@@ -56,7 +56,7 @@ type retrieveOperation struct {
 	FaxDetailsID int    `json:"sFaxDetailsID,omitempty"`
 	FaxFileName  string `json:"sFaxFileName,omitempty"`
 
-	// "IN" or "OUT" for inbound or outbound fax
+	// IN or OUT for inbound or outbound fax
 	Direction string `json:"sDirection"`
 
 	RetrieveOptions

@@ -4,9 +4,14 @@ import "github.com/pkg/errors"
 
 // OutboxOptions specify optional arguments when retrieving outbox items.
 type OutboxOptions struct {
-	Period          string `json:"sPeriod,omitempty"`
-	StartDate       string `json:"sStartDate,omitempty"`
-	EndDate         string `json:"sEndDate,omitempty"`
+	// ALL or RANGE if not provided defaults to ALL
+	Period string `json:"sPeriod,omitempty"`
+
+	// Only required if RANGE is specified in sPeriod – date format must be YYYYMMDD
+	StartDate string `json:"sStartDate,omitempty"`
+	EndDate   string `json:"sEndDate,omitempty"`
+
+	// Set to Y to include faxes received by a sub user of the account as well
 	IncludeSubUsers string `json:"sIncludeSubUsers,omitempty"`
 }
 
@@ -19,19 +24,20 @@ func (o *OutboxOptions) validate() error {
 			}
 		case "ALL":
 			if o.StartDate != "" || o.EndDate != "" {
-				return errors.New("StartDate or EndDate only required when Period set to RANGE")
+				return errors.New("StartDate and/or EndDate not required when setting Period to ALL")
 			}
 		default:
-			return errors.New("Period must be ALL|RANGE")
+			return errors.New("Period can be blank or one of ALL, RANGE. If not provided defaults to ALL")
 		}
 	}
 	if o.IncludeSubUsers != "" && o.IncludeSubUsers != yes {
-		return errors.Errorf(`IncludeSubUsers must be blank or set to "%s"`, yes)
+		return errors.Errorf("IncludeSubUsers must be omitted or set to %q", yes)
 	}
 	return nil
 }
 
-// Outbox represents fax outbox information.
+// Outbox represents fax outbox information. More information can be found on the official docs:
+// https://www.srfax.com/api-page/get_fax_outbox/, look for JSON Returned Variables.
 type Outbox struct {
 	Status string
 	Result []struct {
@@ -66,8 +72,8 @@ type mappedOutbox struct {
 		ErrorCode     string `mapstructure:"ErrorCode"`
 		AccountCode   string `mapstructure:"AccountCode"`
 		Subject       string `mapstructure:"Subject"`
-		UserID        string `mapstructure:"User_ID" json:",omitempty"`
-		UserFaxNumber string `mapstructure:"User_FaxNumber" json:",omitempty"`
+		UserID        string `mapstructure:"User_ID,omitempty"`
+		UserFaxNumber string `mapstructure:"User_FaxNumber,omitempty"`
 		Pages         int    `mapstructure:"Pages"`
 		Duration      int    `mapstructure:"Duration"`
 		Size          int    `mapstructure:"Size"`
@@ -85,8 +91,7 @@ func newOutboxOperation(c *Client, o *OutboxOptions) *outboxOperation {
 	return &outboxOperation{Action: actionGetFaxOutbox, Client: *c, OutboxOptions: *o}
 }
 
-// GetFaxOutbox retrieves a list of faxes sent for a specified period of time.
-func (c *Client) GetFaxOutbox(options ...OutboxOptions) (*Outbox, error) {
+func newOutboxOptions(options ...OutboxOptions) (*OutboxOptions, error) {
 	opts := OutboxOptions{}
 	if len(options) > 0 {
 		if err := options[0].validate(); err != nil {
@@ -94,8 +99,17 @@ func (c *Client) GetFaxOutbox(options ...OutboxOptions) (*Outbox, error) {
 		}
 		opts = options[0]
 	}
+	return &opts, nil
+}
 
-	operation, err := constructFromStruct(newOutboxOperation(c, &opts))
+// GetFaxOutbox retrieves a list of faxes sent for a specified period of time.
+func (c *Client) GetFaxOutbox(options ...OutboxOptions) (*Outbox, error) {
+	opts, err := newOutboxOptions(options...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed options")
+	}
+
+	operation, err := constructFromStruct(newOutboxOperation(c, opts))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct a reader from newOutboxOperation")
 	}
