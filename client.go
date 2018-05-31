@@ -71,11 +71,11 @@ func (u *Usage) String() string {
 	return fmt.Sprintf("Account %d used %d pages from %v to %v", u.AccessID, u.TotalPages, u.StartDate.Format("Jan 02 2006"), u.EndDate.Format("Jan 02 2006"))
 }
 
-// UsageCounter reports the number of pages used by ALL users of the account in
-// the current period based on the account's reset day. Each account will have a unique reset day.
-// To find the reset day navigate to My Account > Summary > look for "fax usage counter will reset on March 19, 2018",
-// for this example the reset day would be 19.
-func (c *Client) UsageCounter(day int) (*Usage, error) {
+// CurrentMonthUsage reports the number of pages used by a specified account in
+// the current period based on the account's reset day. To find your reset day navigate to
+// https://www.srfax.com > My Account > Summary > look for "Your fax usage counter will reset on March 19, 2018".
+// For this example the reset day would be 19.
+func (c *Client) CurrentMonthUsage(day int) (*Usage, error) {
 
 	var start, end time.Time
 	layout := "20060102"
@@ -95,10 +95,9 @@ func (c *Client) UsageCounter(day int) (*Usage, error) {
 	}
 
 	opts := FaxUsageOptions{
-		IncludeSubUsers: yes,
-		Period:          "RANGE",
-		StartDate:       start.Format(layout),
-		EndDate:         end.Format(layout),
+		Period:    "RANGE",
+		StartDate: start.Format(layout),
+		EndDate:   end.Format(layout),
 	}
 
 	resp, err := c.GetFaxUsage(opts)
