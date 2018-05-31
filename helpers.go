@@ -2,7 +2,6 @@ package srfax
 
 import (
 	"bytes"
-	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -214,12 +213,11 @@ func run(r io.Reader, resultType interface{}, url string) error {
 }
 
 func constructFromMap(i interface{}) (io.Reader, error) {
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	if err := enc.Encode(i); err != nil {
-		return nil, errors.Wrap(err, "failed encode")
+	by, err := json.Marshal(&i)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal request")
 	}
-	return bytes.NewReader(buf.Bytes()), nil
+	return bytes.NewReader(by), nil
 }
 
 func constructFromStruct(i interface{}) (io.Reader, error) {
