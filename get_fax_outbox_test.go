@@ -22,7 +22,7 @@ func TestNewOutboxOperation(t *testing.T) {
 				"action": "Get_Fax_Outbox", "access_id": 925, "access_pwd": "abc"},
 		}
 
-		got, err := constructFromStruct(newOutboxOperation(test.c, test.o))
+		got, err := constructReader(newOutboxOperation(test.c, test.o))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -62,7 +62,7 @@ func TestNewOutboxOperation(t *testing.T) {
 				"action": "Get_Fax_Outbox", "access_id": 925, "access_pwd": "abc", "sPeriod": "ALL"},
 		}
 
-		got, err := constructFromStruct(newOutboxOperation(test.c, test.o))
+		got, err := constructReader(newOutboxOperation(test.c, test.o))
 		if err != nil {
 			t.Fatal(err)
 		}

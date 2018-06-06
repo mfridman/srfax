@@ -52,7 +52,7 @@ func (c *Client) DeleteFax(ids []string, direction string) (*DeleteResp, error) 
 		}
 	}
 
-	operation, err := constructFromMap(opr)
+	operation, err := constructReader(opr)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct a reader for delete fax")
 	}

@@ -212,18 +212,10 @@ func run(r io.Reader, resultType interface{}, url string) error {
 	return nil
 }
 
-func constructFromMap(i interface{}) (io.Reader, error) {
+func constructReader(i interface{}) (io.Reader, error) {
 	by, err := json.Marshal(&i)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal request")
-	}
-	return bytes.NewReader(by), nil
-}
-
-func constructFromStruct(i interface{}) (io.Reader, error) {
-	by, err := json.Marshal(i)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed json marshal")
 	}
 	return bytes.NewReader(by), nil
 }

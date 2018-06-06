@@ -97,7 +97,7 @@ func (c *Client) RetrieveFax(ident, direction string, options ...RetrieveOptions
 		return nil, errors.Wrap(err, "failed to build a newRetrieveOperation")
 	}
 
-	operation, err := constructFromStruct(opr)
+	operation, err := constructReader(opr)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct a reader for newRetrieveOperation")
 	}

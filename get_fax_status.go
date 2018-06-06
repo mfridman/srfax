@@ -59,7 +59,7 @@ func (c *Client) GetFaxStatus(id int) (*FaxStatus, error) {
 		return nil, errors.New("id cannot be zero or negative number")
 	}
 
-	operation, err := constructFromStruct(newFaxStatusOperation(c, id))
+	operation, err := constructReader(newFaxStatusOperation(c, id))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct a reader from newFaxStatusOperation")
 	}

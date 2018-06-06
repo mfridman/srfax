@@ -62,7 +62,7 @@ func (c *Client) GetMulFaxStatus(ids []string) (*MulFaxStatus, error) {
 		return nil, errors.New("must supply one or more identifiers")
 	}
 
-	operation, err := constructFromStruct(newMulFaxUsageOperation(c, ids))
+	operation, err := constructReader(newMulFaxUsageOperation(c, ids))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct a reader from newMulFaxUsageOperation")
 	}

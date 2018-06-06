@@ -176,7 +176,7 @@ func (c *Client) QueueFax(files []File, cfg QueueCfg, options ...QueueOptions) (
 		}
 	}
 
-	operation, err := constructFromMap(opr)
+	operation, err := constructReader(opr)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct a reader for queue fax")
 	}

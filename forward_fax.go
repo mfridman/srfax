@@ -169,7 +169,7 @@ func (c *Client) ForwardFax(cfg ForwardCfg, options ...ForwardOptions) (*Forward
 		opts = options[0]
 	}
 
-	operation, err := constructFromStruct(newForwardOperation(c, &cfg, &opts))
+	operation, err := constructReader(newForwardOperation(c, &cfg, &opts))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct a reader from newForwardOperation")
 	}

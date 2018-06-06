@@ -61,7 +61,7 @@ func (c *Client) UpdateViewedStatus(cfg ViewedStatusCfg) (*ViewedStatus, error) 
 		return nil, err
 	}
 
-	operation, err := constructFromStruct(newViewedStatusOperation(c, &cfg))
+	operation, err := constructReader(newViewedStatusOperation(c, &cfg))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct a reader for newViewedStatusOperation")
 	}

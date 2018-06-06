@@ -109,7 +109,7 @@ func (c *Client) GetFaxOutbox(options ...OutboxOptions) (*Outbox, error) {
 		return nil, errors.Wrap(err, "failed options")
 	}
 
-	operation, err := constructFromStruct(newOutboxOperation(c, opts))
+	operation, err := constructReader(newOutboxOperation(c, opts))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct a reader from newOutboxOperation")
 	}

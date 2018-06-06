@@ -20,7 +20,7 @@ func TestNewInboxOperation(t *testing.T) {
 				"action": "Get_Fax_Inbox", "access_id": 925, "access_pwd": "abc"},
 		}
 
-		got, err := constructFromStruct(newInboxOperation(test.c, test.o))
+		got, err := constructReader(newInboxOperation(test.c, test.o))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -59,7 +59,7 @@ func TestNewInboxOperation(t *testing.T) {
 				"action": "Get_Fax_Inbox", "access_id": 925, "access_pwd": "abc", "sViewedStatus": "Y"},
 		}
 
-		got, err := constructFromStruct(newInboxOperation(test.c, test.o))
+		got, err := constructReader(newInboxOperation(test.c, test.o))
 		if err != nil {
 			t.Fatal(err)
 		}

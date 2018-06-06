@@ -86,7 +86,7 @@ func (c *Client) GetFaxUsage(options ...FaxUsageOptions) (*FaxUsage, error) {
 		opts = options[0]
 	}
 
-	operation, err := constructFromStruct(newFaxUsageOperation(c, &opts))
+	operation, err := constructReader(newFaxUsageOperation(c, &opts))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct a reader from newFaxUsageOperation")
 	}

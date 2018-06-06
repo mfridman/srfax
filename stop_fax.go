@@ -33,7 +33,7 @@ func (c *Client) StopFax(id int) (*StopFaxResp, error) {
 		return nil, errors.New("id cannot be zero or negative number")
 	}
 
-	operation, err := constructFromStruct(newStopFaxOperation(c, id))
+	operation, err := constructReader(newStopFaxOperation(c, id))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct a reader for newStopFaxOperation")
 	}
