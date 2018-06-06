@@ -84,6 +84,24 @@ type Inbox struct {
 	}
 }
 
+// Total returns number of unique inbox items in Result.
+func (i *Inbox) Total() int { return len(i.Result) }
+
+// GetAllIDs parses a Result slice and returns all ID's in the inbox.
+func (i *Inbox) GetAllIDs() ([]int, error) {
+	sl := make([]int, 0)
+	if len(i.Result) > 0 {
+		for _, it := range i.Result {
+			id, err := IDFromName(it.FileName)
+			if err != nil {
+				return sl, errors.Wrap(err, "failed to get all ids from inbox")
+			}
+			sl = append(sl, id)
+		}
+	}
+	return sl, nil
+}
+
 // inboxOperation defines the POST variables for a GetFaxInbox operation.
 type inboxOperation struct {
 	Action string `json:"action"`

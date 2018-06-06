@@ -59,6 +59,24 @@ type Outbox struct {
 	}
 }
 
+// Total returns number of unique outbox items in Result.
+func (o *Outbox) Total() int { return len(o.Result) }
+
+// GetAllIDs parses a Result slice and returns all ID's in the outbox.
+func (o *Outbox) GetAllIDs() ([]int, error) {
+	sl := make([]int, 0)
+	if len(o.Result) > 0 {
+		for _, it := range o.Result {
+			id, err := IDFromName(it.FileName)
+			if err != nil {
+				return sl, errors.Wrap(err, "failed to get all ids from outbox")
+			}
+			sl = append(sl, id)
+		}
+	}
+	return sl, nil
+}
+
 type mappedOutbox struct {
 	Status string `mapstructure:"Status"`
 	Result []struct {
