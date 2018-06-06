@@ -3,4 +3,3 @@ script:
   - go test -cover -v ./...
 go:
   - 1.10.x
-  - tip
